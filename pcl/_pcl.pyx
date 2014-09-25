@@ -132,10 +132,10 @@ cdef class PointCloud:
 
     To load a point cloud from disk, use pcl.load.
     """
-    cdef cpp.PointCloud[cpp.PointXYZ] *thisptr
+    cdef cpp.PointCloud[cpp.PointXYZRGB] *thisptr
 
     def __cinit__(self, init=None):
-        self.thisptr = new cpp.PointCloud[cpp.PointXYZ]()
+        self.thisptr = new cpp.PointCloud[cpp.PointXYZRGB]()
 
         if init is None:
             return
@@ -179,10 +179,11 @@ cdef class PointCloud:
         self.thisptr.width = npts
         self.thisptr.height = 1
 
-        cdef cpp.PointXYZ *p
+        cdef cpp.PointXYZRGB *p
         for i in range(npts):
             p = cpp.getptr(self.thisptr, i)
             p.x, p.y, p.z = arr[i, 0], arr[i, 1], arr[i, 2]
+            p.rgb = 0   # TODO: assign a sensible value (black by default?)
 
     @cython.boundscheck(False)
     def to_array(self):
@@ -192,7 +193,7 @@ cdef class PointCloud:
         cdef float x,y,z
         cdef cnp.npy_intp n = self.thisptr.size()
         cdef cnp.ndarray[cnp.float32_t, ndim=2, mode="c"] result
-        cdef cpp.PointXYZ *p
+        cdef cpp.PointXYZRGB *p
 
         result = np.empty((n, 3), dtype=np.float32)
 
@@ -201,6 +202,7 @@ cdef class PointCloud:
             result[i, 0] = p.x
             result[i, 1] = p.y
             result[i, 2] = p.z
+            p.rgb   # TODO: return RBG value ? Or just ignore it...
         return result
 
     def from_list(self, _list):
@@ -208,7 +210,7 @@ cdef class PointCloud:
         Fill this pointcloud from a list of 3-tuples
         """
         cdef Py_ssize_t npts = len(_list)
-        cdef cpp.PointXYZ *p
+        cdef cpp.PointXYZRGB *p
 
         self.resize(npts)
         self.thisptr.width = npts
@@ -216,6 +218,7 @@ cdef class PointCloud:
         for i, l in enumerate(_list):
             p = cpp.getptr(self.thisptr, i)
             p.x, p.y, p.z = l
+            p.rgb = 0   # TODO: add RGB value 
 
     def to_list(self):
         """
@@ -230,12 +233,14 @@ cdef class PointCloud:
         """
         Return a point (3-tuple) at the given row/column
         """
-        cdef cpp.PointXYZ *p = cpp.getptr_at(self.thisptr, row, col)
+        cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr, row, col)
         return p.x, p.y, p.z
+        # TODO: Return RGB value ?
 
     def __getitem__(self, cnp.npy_intp idx):
-        cdef cpp.PointXYZ *p = cpp.getptr_at(self.thisptr, idx)
+        cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr, idx)
         return p.x, p.y, p.z
+        # Return RGB value ?
 
     def from_file(self, char *f):
         """
@@ -586,11 +591,12 @@ cdef class KdTreeFLANN:
             sqdist[i] = k_sqr_distances[i]
             ind[i] = k_indices[i]
 
-cdef cpp.PointXYZ to_point_t(point):
-    cdef cpp.PointXYZ p
+cdef cpp.PointXYZRGB to_point_t(point):
+    cdef cpp.PointXYZRGB p
     p.x = point[0]
     p.y = point[1]
     p.z = point[2]
+    p.rgb = 0   # TODO: add RGB data
     return p
 
 cdef class OctreePointCloud:
