@@ -2,6 +2,7 @@
 
 from collections import Sequence
 import numbers
+import struct
 import numpy as np
 
 cimport numpy as cnp
@@ -52,6 +53,23 @@ SACMODEL_STICK = cpp.SACMODEL_STICK
 
 cnp.import_array()
 
+# RGB helper functions
+def rgb_to_float(r, g, b):
+    rgb = r << 16 | g << 8 | b
+    # p.rgb = *reinterpret_cast<float*>(&rgb);
+    rgb_bytes = struct.pack('I', rgb)
+    p_rgb = struct.unpack('f', rgb_bytes)[0]
+    return p_rgb
+
+def float_to_rgb(p_rgb):
+    # rgb = *reinterpret_cast<int*>(&p.rgb)
+    rgb_bytes = struct.pack('f', p_rgb)
+    rgb = struct.unpack('I', rgb_bytes)[0]
+
+    r = (rgb >> 16) & 0x0000ff
+    g = (rgb >> 8)  & 0x0000ff
+    b = (rgb)       & 0x0000ff
+    return r,g,b
 
 cdef class Segmentation:
     """
@@ -172,7 +190,7 @@ cdef class PointCloud:
         """
         Fill this object from a 2D numpy array (float32)
         """
-        assert arr.shape[1] == 3
+        assert arr.shape[1] == 6
 
         cdef cnp.npy_intp npts = arr.shape[0]
         self.resize(npts)
@@ -183,7 +201,7 @@ cdef class PointCloud:
         for i in range(npts):
             p = cpp.getptr(self.thisptr, i)
             p.x, p.y, p.z = arr[i, 0], arr[i, 1], arr[i, 2]
-            p.rgb = 0   # TODO: assign a sensible value (black by default?)
+            p.rgb = rgb_to_float(arr[i, 3], arr[i, 4], arr[i, 5])
 
     @cython.boundscheck(False)
     def to_array(self):
@@ -195,14 +213,18 @@ cdef class PointCloud:
         cdef cnp.ndarray[cnp.float32_t, ndim=2, mode="c"] result
         cdef cpp.PointXYZRGB *p
 
-        result = np.empty((n, 3), dtype=np.float32)
+        result = np.empty((n, 6), dtype=np.float32)
 
         for i in range(n):
             p = cpp.getptr(self.thisptr, i)
             result[i, 0] = p.x
             result[i, 1] = p.y
             result[i, 2] = p.z
-            p.rgb   # TODO: return RBG value ? Or just ignore it...
+            p_r, p_g,p_b = float_to_rgb(p.rgb)
+            result[i, 3] = p_r
+            result[i, 4] = p_g
+            result[i, 5] = p_b
+
         return result
 
     def from_list(self, _list):
@@ -217,8 +239,8 @@ cdef class PointCloud:
         self.thisptr.height = 1
         for i, l in enumerate(_list):
             p = cpp.getptr(self.thisptr, i)
-            p.x, p.y, p.z = l
-            p.rgb = 0   # TODO: add RGB value 
+            p.x, p.y, p.z = l[0:3]
+            p.rgb = rgb_to_float(l[3], l[4], l[5])
 
     def to_list(self):
         """
@@ -234,8 +256,8 @@ cdef class PointCloud:
         Return a point (3-tuple) at the given row/column
         """
         cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr, row, col)
-        return p.x, p.y, p.z
-        # TODO: Return RGB value ?
+        p_r,p_g,p_b = float_to_rgb(p.rgb)
+        return p.x, p.y, p.z,p_r,p_g,p_b
 
     def __getitem__(self, cnp.npy_intp idx):
         cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr, idx)
@@ -596,7 +618,7 @@ cdef cpp.PointXYZRGB to_point_t(point):
     p.x = point[0]
     p.y = point[1]
     p.z = point[2]
-    p.rgb = 0   # TODO: add RGB data
+    p.rgb = rgb_to_float(point[3], point[4], point[5])
     return p
 
 cdef class OctreePointCloud:
