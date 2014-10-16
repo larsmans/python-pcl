@@ -1,16 +1,13 @@
-PLUGIN_EXT = .so
-
 ifeq "$(OS)" ""
 	OS = $(shell uname -s)
 endif
 
 ifeq "$(OS)" "Darwin"
-	PLUGIN_EXT = .dylib
 	export ARCHFLAGS= -arch x86_64
 endif
 
-PCL_BIN = pcl/_pcl$(PLUGIN_EXT)
-REGISTRATION_BIN = pcl/registration$(PLUGIN_EXT)
+PCL_BIN = pcl/_pcl.so
+REGISTRATION_BIN = pcl/registration.so
 
 all: $(PCL_BIN) $(REGISTRATION_BIN)
 
@@ -29,7 +26,7 @@ clean:
 	rm -rf build
 	rm -f pcl/_pcl.cpp $(PCL_BIN) $(REGISTRATION_BIN)
 
-doc: pcl$(PLUGIN_EXT) conf.py readme.rst
+doc: pcl.so conf.py readme.rst
 	sphinx-build -b singlehtml -d build/doctrees . build/html
 
 showdoc: doc
