@@ -28,11 +28,6 @@ cdef extern from "indexing.hpp":
     PointXYZRGB *getptr_at(PointCloud[PointXYZRGB] *, int, int) except +
 
 cdef extern from "pcl/point_types.h" namespace "pcl":
-    cdef struct PointXYZ:
-        PointXYZ()
-        float x
-        float y
-        float z
     cdef struct PointXYZRGB:
         PointXYZRGB()
         float x

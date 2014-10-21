@@ -56,12 +56,9 @@ SACMODEL_STICK = cpp.SACMODEL_STICK
 cnp.import_array()
 
 # RGB helper functions
-def rgb_to_float(r, g, b):
-    rgb = r << 16 | g << 8 | b
-    # p.rgb = *reinterpret_cast<float*>(&rgb);
-    rgb_bytes = struct.pack('I', rgb)
-    p_rgb = struct.unpack('f', rgb_bytes)[0]
-    return p_rgb
+cdef float rgb_to_float(cnp.float32_t r_, cnp.float32_t g_, cnp.float32_t b_):
+    cdef int r = <int>r_, g = <int>g_, b = <int>b_
+    return <float>(r << 16 | g << 8 | b)
 
 def float_to_rgb(p_rgb):
     # rgb = *reinterpret_cast<int*>(&p.rgb)
@@ -143,15 +140,10 @@ cdef class SegmentationNormal:
     def set_axis(self, double ax, double ay, double az):
         mpcl_sacnormal_set_axis(deref(self.me),ax,ay,az)
 
-cdef class PointCloud:
-    """Represents a cloud of points in 3-d space.
-
-    A point cloud can be initialized from either a NumPy ndarray of shape
-    (n_points, 3), from a list of triples, or from an integer n to create an
-    "empty" cloud of n points.
-
-    To load a point cloud from disk, use pcl.load.
-    """
+# Base class for point clouds: stores XYZ and RGB information.
+# RGB takes four bytes per point, but we just take the hit
+# to keep the code simple.
+cdef class BasePointCloud:
     def __cinit__(self, init=None):
         sp_assign(self.thisptr_shared, new cpp.PointCloud[cpp.PointXYZRGB]())
 
@@ -180,21 +172,17 @@ cdef class PointCloud:
         """ property containing whether the cloud is dense or not """
         def __get__(self): return self.thisptr().is_dense
 
-    def __repr__(self):
-        return "<PointCloud of %d points>" % self.size
-
-    # Pickle support. XXX this copies the entire pointcloud; it would be nice
-    # to have an asarray member that returns a view, or even better, implement
-    # the buffer protocol (https://docs.python.org/c-api/buffer.html).
-    def __reduce__(self):
-        return type(self), (self.to_array(),)
-
     @cython.boundscheck(False)
     def from_array(self, cnp.ndarray[cnp.float32_t, ndim=2] arr not None):
         """
         Fill this object from a 2D numpy array (float32)
         """
-        assert arr.shape[1] == 6
+        cdef bint rgb
+
+        if arr.shape[1] == 6:
+            rgb = True
+        elif arr.shape[1] == 3:
+            rgb = False
 
         cdef cnp.npy_intp npts = arr.shape[0]
         self.resize(npts)
@@ -205,29 +193,29 @@ cdef class PointCloud:
         for i in range(npts):
             p = cpp.getptr(self.thisptr(), i)
             p.x, p.y, p.z = arr[i, 0], arr[i, 1], arr[i, 2]
-            p.rgb = rgb_to_float(arr[i, 3], arr[i, 4], arr[i, 5])
+            if rgb:
+                p.rgb = rgb_to_float(arr[i, 3], arr[i, 4], arr[i, 5])
 
     @cython.boundscheck(False)
-    def to_array(self):
+    def _to_array(self, cnp.ndarray[cnp.float32_t, ndim=2] result not None):
         """
         Return this object as a 2D numpy array (float32)
         """
+        cdef bint rgb = result.shape[1] > 3
         cdef float x,y,z
         cdef cnp.npy_intp n = self.thisptr().size()
-        cdef cnp.ndarray[cnp.float32_t, ndim=2, mode="c"] result
         cdef cpp.PointXYZRGB *p
-
-        result = np.empty((n, 6), dtype=np.float32)
 
         for i in range(n):
             p = cpp.getptr(self.thisptr(), i)
             result[i, 0] = p.x
             result[i, 1] = p.y
             result[i, 2] = p.z
-            p_r, p_g,p_b = float_to_rgb(p.rgb)
-            result[i, 3] = p_r
-            result[i, 4] = p_g
-            result[i, 5] = p_b
+            if rgb:
+                p_r, p_g,p_b = float_to_rgb(p.rgb)
+                result[i, 3] = p_r
+                result[i, 4] = p_g
+                result[i, 5] = p_b
 
         return result
 
@@ -243,14 +231,13 @@ cdef class PointCloud:
         self.thisptr().height = 1
         for i, l in enumerate(_list):
             p = cpp.getptr(self.thisptr(), i)
-            p.x, p.y, p.z = l[0:3]
-            p.rgb = rgb_to_float(l[3], l[4], l[5])
-
-    def to_list(self):
-        """
-        Return this object as a list of 3-tuples
-        """
-        return self.to_array().tolist()
+            if len(l) == 3:
+                p.x, p.y, p.z = l[0:3]
+            elif len(l) == 6:
+                p.x, p.y, p.z = l[0:3]
+                p.rgb = rgb_to_float(l[3], l[4], l[5])
+            else:
+                raise ValueError("not a valid point %r" % l)
 
     def resize(self, cnp.npy_intp x):
         self.thisptr().resize(x)
@@ -266,7 +253,6 @@ cdef class PointCloud:
     def __getitem__(self, cnp.npy_intp idx):
         cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr(), idx)
         return p.x, p.y, p.z
-        # Return RGB value ?
 
     def from_file(self, char *f):
         """
@@ -339,8 +325,7 @@ cdef class PointCloud:
         Return a pcl.StatisticalOutlierRemovalFilter object with this object set as the input-cloud
         """
         fil = StatisticalOutlierRemovalFilter()
-        cdef cpp.StatisticalOutlierRemoval_t *cfil = <cpp.StatisticalOutlierRemoval_t *>fil.me
-        cfil.setInputCloud(self.thisptr_shared)
+        fil._set_input(self)
         return fil
 
     def make_voxel_grid_filter(self):
@@ -348,8 +333,7 @@ cdef class PointCloud:
         Return a pcl.VoxelGridFilter object with this object set as the input-cloud
         """
         fil = VoxelGridFilter()
-        cdef cpp.VoxelGrid_t *cfil = <cpp.VoxelGrid_t *>fil.me
-        cfil.setInputCloud(self.thisptr_shared)
+        fil._set_input(self)
         return fil
 
     def make_passthrough_filter(self):
@@ -357,8 +341,7 @@ cdef class PointCloud:
         Return a pcl.PassThroughFilter object with this object set as the input-cloud
         """
         fil = PassThroughFilter()
-        cdef cpp.PassThrough_t *cfil = <cpp.PassThrough_t *>fil.me
-        cfil.setInputCloud(self.thisptr_shared)
+        fil._set_input(self)
         return fil
 
     def make_moving_least_squares(self):
@@ -366,8 +349,7 @@ cdef class PointCloud:
         Return a pcl.MovingLeastSquares object with this object as input cloud.
         """
         mls = MovingLeastSquares()
-        cdef cpp.MovingLeastSquares_t *cmls = <cpp.MovingLeastSquares_t *>mls.me
-        cmls.setInputCloud(self.thisptr_shared)
+        mls._set_input(self)
         return mls
 
     def make_kdtree_flann(self):
@@ -391,13 +373,13 @@ cdef class PointCloud:
         Given a list of indices of points in the pointcloud, return a 
         new pointcloud containing only those points.
         """
-        cdef PointCloud result
+        cdef BasePointCloud result
         cdef cpp.PointIndices_t *ind = new cpp.PointIndices_t()
 
         for i in pyindices:
             ind.indices.push_back(i)
 
-        result = PointCloud()
+        result = type(self)()
         mpcl_extract(self.thisptr_shared, result.thisptr(), ind, negative)
         # XXX are we leaking memory here? del ind causes a double free...
 
@@ -408,10 +390,16 @@ cdef class StatisticalOutlierRemovalFilter:
     Filter class uses point neighborhood statistics to filter outlier data.
     """
     cdef cpp.StatisticalOutlierRemoval_t *me
+    cdef object _pc_type
+
     def __cinit__(self):
         self.me = new cpp.StatisticalOutlierRemoval_t()
     def __dealloc__(self):
         del self.me
+
+    def _set_input(self, BasePointCloud pc):
+        self._pc_type = type(pc)
+        self.me.setInputCloud(pc.thisptr_shared)
 
     def set_mean_k(self, int k):
         """
@@ -436,7 +424,7 @@ cdef class StatisticalOutlierRemovalFilter:
         Apply the filter according to the previously set parameters and return
         a new pointcloud
         """
-        cdef PointCloud pc = PointCloud()
+        cdef BasePointCloud pc = self._pc_type()
         self.me.filter(pc.thisptr()[0])
         return pc
 
@@ -446,10 +434,16 @@ cdef class MovingLeastSquares:
     algorithm for data smoothing and improved normal estimation.
     """
     cdef cpp.MovingLeastSquares_t *me
+    cdef object _pc_type
+
     def __cinit__(self):
         self.me = new cpp.MovingLeastSquares_t()
     def __dealloc__(self):
         del self.me
+
+    def _set_input(self, BasePointCloud pc):
+        self._pc_type = type(pc)
+        self.me.setInputCloud(pc.thisptr_shared)
 
     def set_search_radius(self, double radius):
         """
@@ -475,7 +469,7 @@ cdef class MovingLeastSquares:
         Apply the smoothing according to the previously set values and return
         a new pointcloud
         """
-        cdef PointCloud pc = PointCloud()
+        cdef BasePointCloud pc = self._pc_type()
         self.me.process(pc.thisptr()[0])
         return pc
 
@@ -484,10 +478,16 @@ cdef class VoxelGridFilter:
     Assembles a local 3D grid over a given PointCloud, and downsamples + filters the data.
     """
     cdef cpp.VoxelGrid_t *me
+    cdef object _pc_type
+
     def __cinit__(self):
         self.me = new cpp.VoxelGrid_t()
     def __dealloc__(self):
         del self.me
+
+    def _set_input(self, BasePointCloud pc):
+        self.me.setInputCloud(pc.thisptr_shared)
+        self._pc_type = type(pc)
 
     def set_leaf_size (self, float x, float y, float z):
         """
@@ -500,7 +500,7 @@ cdef class VoxelGridFilter:
         Apply the filter according to the previously set parameters and return
         a new pointcloud
         """
-        cdef PointCloud pc = PointCloud()
+        cdef BasePointCloud pc = self._pc_type()
         self.me.filter(pc.thisptr()[0])
         return pc
 
@@ -509,10 +509,16 @@ cdef class PassThroughFilter:
     Passes points in a cloud based on constraints for one particular field of the point type
     """
     cdef cpp.PassThrough_t *me
+    cdef object _pc_type
+
     def __cinit__(self):
         self.me = new cpp.PassThrough_t()
     def __dealloc__(self):
         del self.me
+
+    def _set_input(self, BasePointCloud pc):
+        self.me.setInputCloud(pc.thisptr_shared)
+        self._pc_type = type(pc)
 
     def set_filter_field_name(self, field_name):
         cdef bytes fname_ascii
@@ -533,7 +539,7 @@ cdef class PassThroughFilter:
         Apply the filter according to the previously set parameters and return
         a new pointcloud
         """
-        cdef PointCloud pc = PointCloud()
+        cdef BasePointCloud pc = self._pc_type()
         self.me.filter(pc.thisptr()[0])
         return pc
 
@@ -547,14 +553,14 @@ cdef class KdTreeFLANN:
     """
     cdef cpp.KdTreeFLANN_t *me
 
-    def __cinit__(self, PointCloud pc not None):
+    def __cinit__(self, BasePointCloud pc not None):
         self.me = new cpp.KdTreeFLANN_t()
         self.me.setInputCloud(pc.thisptr_shared)
 
     def __dealloc__(self):
         del self.me
 
-    def nearest_k_search_for_cloud(self, PointCloud pc not None, int k=1):
+    def nearest_k_search_for_cloud(self, BasePointCloud pc not None, int k=1):
         """
         Find the k nearest neighbours and squared distances for all points
         in the pointcloud. Results are in ndarrays, size (pc.size, k)
@@ -570,7 +576,7 @@ cdef class KdTreeFLANN:
             self._nearest_k(pc, i, k, ind[i], sqdist[i])
         return ind, sqdist
 
-    def nearest_k_search_for_point(self, PointCloud pc not None, int index,
+    def nearest_k_search_for_point(self, BasePointCloud pc not None, int index,
                                    int k=1):
         """
         Find the k nearest neighbours and squared distances for the point
@@ -584,7 +590,7 @@ cdef class KdTreeFLANN:
         return ind, sqdist
 
     @cython.boundscheck(False)
-    cdef void _nearest_k(self, PointCloud pc, int index, int k,
+    cdef void _nearest_k(self, BasePointCloud pc, int index, int k,
                          cnp.ndarray[ndim=1, dtype=int, mode='c'] ind,
                          cnp.ndarray[ndim=1, dtype=float, mode='c'] sqdist
                         ) except +:
@@ -629,7 +635,7 @@ cdef class OctreePointCloud:
         del self.me
         self.me = NULL      # just to be sure
 
-    def set_input_cloud(self, PointCloud pc):
+    def set_input_cloud(self, BasePointCloud pc):
         """
         Provide a pointer to the input data set.
         """
