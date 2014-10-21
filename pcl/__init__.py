@@ -4,6 +4,44 @@ from ._pcl import *
 import sys
 
 
+class BasePyPointCloud(BasePointCloud):
+    def __repr__(self):
+        return "<%s of %d points>" % (type(self).__name__, self.size)
+
+    # Pickle support. XXX this copies the entire pointcloud; it would be nice
+    # to have an asarray member that returns a view, or even better, implement
+    # the buffer protocol (https://docs.python.org/c-api/buffer.html).
+    def __reduce__(self):
+        return type(self), (self.to_array(),)
+
+    def to_list(self):
+        """Return this object as a list of tuples."""
+        return self.to_array().tolist()
+
+
+class PointCloud(BasePyPointCloud):
+    """3-d point cloud (no color information)."""
+    def get_point(self, row, col):
+        """Return point (3-tuple) at the given row/column."""
+        return self._get_point(row, col)[:3]
+
+    def to_array(self):
+        """Return this object as a 2D numpy array (float32)."""
+        return self._to_array(np.empty((self.size, 3), dtype=np.float32))
+
+
+class PointCloudXYZRGB(BasePyPointCloud):
+    """3-d point with color information."""
+
+    def to_array(self):
+        """Return this object as a 2D numpy array (float32)."""
+        return self._to_array(np.empty((self.size, 6), dtype=np.float32))
+
+
+class PointCloudXYZRGB(PointCloud):
+    pass
+
+
 def load(path, format=None):
     """Load pointcloud from path.
 

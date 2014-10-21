@@ -58,14 +58,15 @@ cdef extern from "registration_helper.h":
                             SampleConsensusInitialAlignment_t) except +
 
 cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
-                _pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
+                _pcl.BasePointCloud source, _pcl.BasePointCloud target,
+                max_iter=None):
     reg.setInputSource(source.thisptr_shared)
     reg.setInputTarget(target.thisptr_shared)
 
     if max_iter is not None:
         reg.setMaximumIterations(max_iter)
 
-    cdef _pcl.PointCloud result = _pcl.PointCloud()
+    cdef _pcl.BasePointCloud result = type(source)()
 
     with nogil:
         reg.align(result.thisptr()[0])
@@ -84,14 +85,14 @@ cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
 
     return reg.hasConverged(), transf, result, reg.getFitnessScore()
 
-def icp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
+def icp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None):
     """Align source to target using iterative closest point (ICP).
 
     Parameters
     ----------
-    source : PointCloud
+    source : point cloud
         Source point cloud.
-    target : PointCloud
+    target : point cloud
         Target point cloud.
     max_iter : integer, optional
         Maximum number of iterations. If not given, uses the default number
@@ -103,8 +104,8 @@ def icp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
         Whether the ICP algorithm converged in at most max_iter steps.
     transf : np.ndarray, shape = [4, 4]
         Transformation matrix.
-    estimate : PointCloud
-        Transformed version of source.
+    estimate : point cloud
+        Transformed version of source. Will be of the same type as source.
     fitness : float
         Sum of squares error in the estimated transformation.
     """
@@ -112,14 +113,14 @@ def icp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
     return run(icp, source, target, max_iter)
 
 
-def gicp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
+def gicp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None):
     """Align source to target using generalized iterative closest point (GICP).
 
     Parameters
     ----------
-    source : PointCloud
+    source : point cloud
         Source point cloud.
-    target : PointCloud
+    target : point cloud
         Target point cloud.
     max_iter : integer, optional
         Maximum number of iterations. If not given, uses the default number
@@ -131,8 +132,8 @@ def gicp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
         Whether the ICP algorithm converged in at most max_iter steps.
     transf : np.ndarray, shape = [4, 4]
         Transformation matrix.
-    estimate : PointCloud
-        Transformed version of source.
+    estimate : point cloud
+        Transformed version of source. Will be of the same type as source.
     fitness : float
         Sum of squares error in the estimated transformation.
     """
@@ -140,16 +141,16 @@ def gicp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
     return run(gicp, source, target, max_iter)
 
 
-def icp_nl(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
+def icp_nl(_pcl.BasePointCloud source, _pcl.BasePointCloud target,
+           max_iter=None):
     """Align source to target using generalized non-linear ICP (ICP-NL).
 
     Parameters
     ----------
-    source : PointCloud
+    source : point cloud
         Source point cloud.
-    target : PointCloud
+    target : point cloud
         Target point cloud.
-
     max_iter : integer, optional
         Maximum number of iterations. If not given, uses the default number
         hardwired into PCL.
@@ -160,15 +161,16 @@ def icp_nl(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
         Whether the ICP algorithm converged in at most max_iter steps.
     transf : np.ndarray, shape = [4, 4]
         Transformation matrix.
-    estimate : PointCloud
-        Transformed version of source.
+    estimate : point cloud
+        Transformed version of source. Will be of the same type as source.
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef IterativeClosestPointNonLinear[cpp.PointXYZRGB, cpp.PointXYZRGB] icp_nl
+    cdef IterativeClosestPointNonLinear[cpp.PointXYZRGB,
+                                        cpp.PointXYZRGB] icp_nl
     return run(icp_nl, source, target, max_iter)
 	
-def ia_ransac(_pcl.PointCloud source, _pcl.PointCloud target, radius=0.05, minSampleDistance=0.05, maxCorrespondenceDistance=0.2, max_iter=None):
+def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target, radius=0.05, minSampleDistance=0.05, maxCorrespondenceDistance=0.2, max_iter=None):
     """
     An implementation of the initial alignment algorithm described in section IV
     of "Fast Point Feature Histograms (FPFH) for 3D Registration," Rusu et al. 

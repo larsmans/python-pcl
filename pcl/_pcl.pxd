@@ -4,7 +4,7 @@
 cimport pcl_defs as cpp
 
 
-cdef class PointCloud:
+cdef class BasePointCloud:
     cdef cpp.PointCloudPtr_t thisptr_shared
 
     cdef inline cpp.PointCloud[cpp.PointXYZRGB] *thisptr(self) nogil:
