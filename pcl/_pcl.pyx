@@ -611,7 +611,10 @@ cdef cpp.PointXYZRGB to_point_t(point):
     p.x = point[0]
     p.y = point[1]
     p.z = point[2]
-    p.rgb = rgb_to_float(point[3], point[4], point[5])
+    if len(point) > 3:
+        p.rgb = rgb_to_float(point[3], point[4], point[5])
+    else:
+        p.rgb = 0.
     return p
 
 cdef class OctreePointCloud:
