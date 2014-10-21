@@ -38,7 +38,7 @@ cdef extern from "pcl/registration/icp_nl.h" namespace "pcl" nogil:
         IterativeClosestPointNonLinear() except +
 
 
-cdef object run(Registration[cpp.PointXYZ, cpp.PointXYZ] &reg,
+cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
                 _pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
     reg.setInputSource(source.thisptr_shared)
     reg.setInputTarget(target.thisptr_shared)
@@ -52,7 +52,7 @@ cdef object run(Registration[cpp.PointXYZ, cpp.PointXYZ] &reg,
         reg.align(result.thisptr()[0])
 
     # Get transformation matrix and convert from Eigen to NumPy format.
-    cdef Registration[cpp.PointXYZ, cpp.PointXYZ].Matrix4 mat
+    cdef Registration[cpp.PointXYZRGB, cpp.PointXYZRGB].Matrix4 mat
     mat = reg.getFinalTransformation()
     cdef np.ndarray[dtype=np.float32_t, ndim=2, mode='c'] transf
     cdef np.float32_t *transf_data
@@ -90,7 +90,7 @@ def icp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef IterativeClosestPoint[cpp.PointXYZ, cpp.PointXYZ] icp
+    cdef IterativeClosestPoint[cpp.PointXYZRGB, cpp.PointXYZRGB] icp
     return run(icp, source, target, max_iter)
 
 
@@ -118,7 +118,7 @@ def gicp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef GeneralizedIterativeClosestPoint[cpp.PointXYZ, cpp.PointXYZ] gicp
+    cdef GeneralizedIterativeClosestPoint[cpp.PointXYZRGB, cpp.PointXYZRGB] gicp
     return run(gicp, source, target, max_iter)
 
 
@@ -147,5 +147,5 @@ def icp_nl(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef IterativeClosestPointNonLinear[cpp.PointXYZ, cpp.PointXYZ] icp_nl
+    cdef IterativeClosestPointNonLinear[cpp.PointXYZRGB, cpp.PointXYZRGB] icp_nl
     return run(icp_nl, source, target, max_iter)
