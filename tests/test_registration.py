@@ -5,7 +5,7 @@ from numpy import cos, sin
 import unittest
 
 import pcl
-from pcl.registration import icp, gicp, icp_nl
+from pcl.registration import icp, gicp, icp_nl, ia_ransac
 
 
 class TestICP(unittest.TestCase):
