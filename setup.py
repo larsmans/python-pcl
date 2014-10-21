@@ -9,6 +9,9 @@ import sys
 import platform
 import os
 
+# JB: faster compilation? remove for production
+os.environ['CFLAGS'] = '-O0'
+
 if platform.system() == "Darwin":
 	os.environ['ARCHFLAGS'] = ''
 
