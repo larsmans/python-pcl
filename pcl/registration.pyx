@@ -10,8 +10,15 @@ import numpy as np
 cimport _pcl
 cimport pcl_defs as cpp
 
+from cython.operator import dereference as deref
+from shared_ptr cimport shared_ptr
+
 np.import_array()
 
+cdef extern from "pcl/point_types.h" namespace "pcl":
+    cdef struct FPFHSignature33:
+        FPFHSignature33()
+        float fpfh[33]
 
 cdef extern from "pcl/registration/registration.h" namespace "pcl" nogil:
     cdef cppclass Registration[Source, Target]:
@@ -37,6 +44,18 @@ cdef extern from "pcl/registration/icp_nl.h" namespace "pcl" nogil:
     cdef cppclass IterativeClosestPointNonLinear[Source, Target](Registration[Source, Target]):
         IterativeClosestPointNonLinear() except +
 
+cdef extern from "pcl/registration/ia_ransac.h" namespace "pcl" nogil:
+    cdef cppclass SampleConsensusInitialAlignment[Source, Target, Feature](Registration[Source, Target]):
+        SampleConsensusInitialAlignment() except +
+
+ctypedef SampleConsensusInitialAlignment[cpp.PointXYZRGB,cpp.PointXYZRGB,FPFHSignature33] SampleConsensusInitialAlignment_t
+ctypedef shared_ptr[SampleConsensusInitialAlignment[cpp.PointXYZRGB,cpp.PointXYZRGB,FPFHSignature33]] SampleConsensusInitialAlignmentPtr_t
+
+cdef extern from "registration_helper.h":
+    void mpcl_sample_consensus_initial_alignment_init(
+                            cpp.PointCloud_t, cpp.PointCloud_t,
+                            double searchRadius, double minSampleDistance, double maxCorrespondenceDistance,
+                            SampleConsensusInitialAlignment_t) except +
 
 cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
                 _pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
@@ -64,7 +83,6 @@ cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
         transf_data[i] = mat.data()[i]
 
     return reg.hasConverged(), transf, result, reg.getFitnessScore()
-
 
 def icp(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
     """Align source to target using iterative closest point (ICP).
@@ -149,3 +167,32 @@ def icp_nl(_pcl.PointCloud source, _pcl.PointCloud target, max_iter=None):
     """
     cdef IterativeClosestPointNonLinear[cpp.PointXYZRGB, cpp.PointXYZRGB] icp_nl
     return run(icp_nl, source, target, max_iter)
+	
+def ia_ransac(_pcl.PointCloud source, _pcl.PointCloud target, radius=0.05, minSampleDistance=0.05, maxCorrespondenceDistance=0.2, max_iter=None):
+    """
+    An implementation of the initial alignment algorithm described in section IV
+    of "Fast Point Feature Histograms (FPFH) for 3D Registration," Rusu et al. 
+
+    Parameters
+    ----------
+    source : PointCloud
+        Source point cloud.
+    target : PointCloud
+        Target point cloud.
+
+    max_iter : integer, optional
+        Maximum number of iterations. If not given, uses the default number
+        hardwired into PCL.
+
+    Returns
+    -------
+    converged : bool
+        Whether the ICP algorithm converged in at most max_iter steps.
+    estimate : PointCloud
+        Transformed version of source.
+    fitness : float
+        Sum of squares error in the estimated transformation.
+    """
+    cdef SampleConsensusInitialAlignment[cpp.PointXYZRGB, cpp.PointXYZRGB, FPFHSignature33] ia_ransac
+    mpcl_sample_consensus_initial_alignment_init(deref(source.thisptr()), deref(target.thisptr()), radius, minSampleDistance, maxCorrespondenceDistance, ia_ransac)
+    return run(ia_ransac, source, target, max_iter)

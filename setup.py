@@ -77,7 +77,7 @@ setup(name='python-pcl',
       packages=["pcl"],
       ext_modules=[Extension("pcl._pcl", ["pcl/_pcl.pyx", "pcl/minipcl.cpp"],
                              language="c++", **ext_args),
-                   Extension("pcl.registration", ["pcl/registration.pyx"],
+                   Extension("pcl.registration", ["pcl/registration.pyx", "pcl/registration_helper.cpp"],
                              language="c++", **ext_args),
                   ],
       cmdclass={'build_ext': build_ext}

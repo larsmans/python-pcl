@@ -61,3 +61,6 @@ class TestICP(unittest.TestCase):
 
     def testICP_NL(self):
         self.check_algo(icp_nl)
+        
+    def testIA_RANSAC(self):
+        self.check_algo(ia_ransac)
