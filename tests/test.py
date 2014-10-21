@@ -375,3 +375,10 @@ class TestOctreePointCloudSearch(unittest.TestCase):
         rs = self.t.radius_search(good_point, 0.5)
         self.assertEqual(len(rs[0]), 19730)
         self.assertEqual(len(rs[1]), 19730)
+
+class TestMomentInvariant(unittest.TestCase):
+    def setUp(self):
+        pass
+    
+    def testConstructor(self):
+        self.assertRaises(ValueError, pcl.MomentInvariantsEstimation, 0.)

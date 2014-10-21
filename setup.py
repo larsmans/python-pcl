@@ -22,7 +22,7 @@ else:
 # Find build/link options for PCL using pkg-config.
 pcl_libs = ["common", "features", "filters", "io", "kdtree", "octree",
             "registration", "sample_consensus", "search", "segmentation",
-            "surface"]
+            "surface", "recognition", "tracking", "visualization", "people", "outofcore", "keypoints"]
 pcl_libs = ["pcl_%s%s" % (lib, pcl_version) for lib in pcl_libs]
 
 ext_args = defaultdict(list)
