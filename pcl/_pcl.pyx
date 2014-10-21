@@ -680,3 +680,15 @@ cdef class OctreePointCloudSearch(OctreePointCloud):
             np_k_indices[i] = k_indices[i]
         return np_k_indices, np_k_sqr_distances
 
+cdef class MomentInvariantsEstimation:
+    cdef cpp.MomentInvariantsEstimation_t *me
+    
+    def __cinit(self):
+        self.me = <cpp.MomentInvariantsEstimation_t*> new cpp.MomentInvariantsEstimation_t()
+
+    def computePointMomentInvariants(self, PointCloud pc not None):
+        cdef j1 = 0
+        cdef j2 = 0
+        cdef j3 = 0
+        self.me.computePointMomentInvariants (pc.thisptr()[0], j1, j2, j3)
+        return j1, j2, j3

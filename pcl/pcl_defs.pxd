@@ -109,6 +109,13 @@ cdef extern from "pcl/octree/octree_search.h" namespace "pcl::octree":
 
 ctypedef OctreePointCloudSearch[PointXYZ] OctreePointCloudSearch_t
 
+cdef extern from "pcl/features/moment_invariants.h" namespace "pcl":
+    cdef cppclass MomentInvariantsEstimation[I,O]:
+        MomentInvariantsEstimation()
+        void computePointMomentInvariants (PointCloud[I] &cloud, float &j1, float &j2, float &j3)
+
+ctypedef MomentInvariantsEstimation[PointXYZ,PointXYZ] MomentInvariantsEstimation_t
+
 cdef extern from "pcl/ModelCoefficients.h" namespace "pcl":
     cdef struct ModelCoefficients:
         vector[float] values
