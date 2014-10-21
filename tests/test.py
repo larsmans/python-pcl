@@ -16,7 +16,6 @@ _DATA = \
 4.0, 8.0, 12.2"""
 
 class TestListIO(unittest.TestCase):
-
     def setUp(self):
         self.p = pcl.PointCloud(_data)
 
@@ -29,8 +28,21 @@ class TestListIO(unittest.TestCase):
         l = self.p.to_list()
         assert np.allclose(l, _data)
 
-class TestNumpyIO(unittest.TestCase):
+class TestListIOXYZRGB(unittest.TestCase):
+    def setUp(self):
+        self.p = pcl.PointCloudXYZRGB(_data)
 
+    def testFromList(self):
+        for i,d in enumerate(_data):
+            pt = self.p[i]
+            assert np.allclose(pt, _data[i])
+
+    def testToList(self):
+        l = self.p.to_list()
+        assert np.allclose(l, _data)
+
+
+class TestNumpyIO(unittest.TestCase):
     def setUp(self):
         self.a = np.array(np.mat(_DATA, dtype=np.float32))
         self.p = pcl.PointCloud(self.a)
@@ -143,6 +155,49 @@ DATA ascii
 SEGCYLMOD = [0.0552167, 0.0547035, 0.757707, -0.0270852, -4.41026, -2.88995, 0.0387603]
 SEGCYLIN = 11462
 
+#copy the output of seg
+SEGDATARGB = \
+"""0.352222 -0.151883 2 0 0 0;
+-0.106395 -0.397406 1 0 0 0;
+-0.473106 0.292602 1 0 0 0;
+-0.731898 0.667105 -2 0 0 0;
+0.441304 -0.734766 1 0 0 0;
+0.854581 -0.0361733 1 0 0 0;
+-0.4607 -0.277468 4 0 0 0;
+-0.916762 0.183749 1 0 0 0;
+0.968809 0.512055 1 0 0 0;
+-0.998983 -0.463871 1 0 0 0;
+0.691785 0.716053 1 0 0 0;
+0.525135 -0.523004 1 0 0 0;
+0.439387 0.56706 1 0 0 0;
+0.905417 -0.579787 1 0 0 0;
+0.898706 -0.504929 1 0 0 0"""
+
+class TestSegmentPlaneXYZRGB(unittest.TestCase):
+
+    def setUp(self):
+        self.a = np.array(np.mat(SEGDATARGB, dtype=np.float32))
+        self.p = pcl.PointCloudXYZRGB()
+        self.p.from_array(self.a)
+
+    def testLoad(self):
+        npts = self.a.shape[0]
+        self.assertEqual(npts, self.p.size)
+        self.assertEqual(npts, self.p.width)
+        self.assertEqual(1, self.p.height)
+
+    def testSegmentPlaneObject(self):
+        seg = self.p.make_segmenter()
+        seg.set_optimize_coefficients (True)
+        seg.set_model_type(pcl.SACMODEL_PLANE)
+        seg.set_method_type(pcl.SAC_RANSAC)
+        seg.set_distance_threshold (0.01)
+
+        indices, model = seg.segment()
+        self.assertListEqual(indices, SEGINLIERSIDX)
+        self.assertListEqual(model, SEGCOEFF)
+
+
 class TestSegmentCylinder(unittest.TestCase):
 
     def setUp(self):
@@ -230,7 +285,6 @@ class TestExceptions(unittest.TestCase):
         self.assertRaises(MemoryError, self.p.resize, -1)
 
 class TestSegmenterNormal(unittest.TestCase):
-
     def setUp(self):
         self.p = pcl.load("tests/table_scene_mug_stereo_textured_noplane.pcd")
 
@@ -336,6 +390,40 @@ class TestKdTree(unittest.TestCase):
             for d in sqdist:
                 self.assertGreaterEqual(d, 0)
 
+class TestKdTreeXYZRGB(unittest.TestCase):
+    def setUp(self):
+        rng = np.random.RandomState(42)
+        # Define two dense sets of points of sizes 30 and 170, resp.
+        axyz = np.random.randn(100, 3).astype(np.float32)
+        axyz[:30] -= 42
+        argb = np.random.randint(0,255,(100,3))
+        a = np.hstack([axyz, argb]).astype(np.float32)
+
+        self.pc = pcl.PointCloudXYZRGB(a)
+        self.kd = pcl.KdTreeFLANN(self.pc)
+
+    def testException(self):
+        self.assertRaises(TypeError, pcl.KdTreeFLANN)
+        self.assertRaises(TypeError, self.kd.nearest_k_search_for_cloud, None)
+
+    def testKNN(self):
+        # Small cluster
+        ind, sqdist = self.kd.nearest_k_search_for_point(self.pc, 0, k=2)
+        for i in ind:
+            self.assertGreaterEqual(i, 0)
+            self.assertLess(i, 30)
+        for d in sqdist:
+            self.assertGreaterEqual(d, 0)
+
+        # Big cluster
+        for ref, k in ((80, 1), (59, 3), (60, 10)):
+            ind, sqdist = self.kd.nearest_k_search_for_point(self.pc, ref, k=k)
+            for i in ind:
+                self.assertGreaterEqual(i, 30)
+            for d in sqdist:
+                self.assertGreaterEqual(d, 0)
+
+
 class TestOctreePointCloud(unittest.TestCase):
     def setUp(self):
         self.t = pcl.OctreePointCloud(0.1)
@@ -345,7 +433,7 @@ class TestOctreePointCloud(unittest.TestCase):
         self.t.set_input_cloud(pc)
         self.t.define_bounding_box()
         self.t.add_points_from_input_cloud()
-        good_point = (0.035296999, -0.074322999, 1.2074)
+        good_point = (0.035296999, -0.074322999, 1.2074, 0, 0, 0)
         rs = self.t.is_voxel_occupied_at_point(good_point)
         self.assertTrue(rs)
         bad_point = (0.5, 0.5, 0.5)
@@ -368,7 +456,7 @@ class TestOctreePointCloudSearch(unittest.TestCase):
         self.assertRaises(ValueError, pcl.OctreePointCloudSearch, 0.)
 
     def testRadiusSearch(self):
-        good_point = (0.035296999, -0.074322999, 1.2074)
+        good_point = (0.035296999, -0.074322999, 1.2074, 0, 0, 0)
         rs = self.t.radius_search(good_point, 0.5, 1)
         self.assertEqual(len(rs[0]), 1)
         self.assertEqual(len(rs[1]), 1)
