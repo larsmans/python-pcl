@@ -35,6 +35,8 @@ cdef extern from "pcl/point_types.h" namespace "pcl":
         float z
     cdef struct Normal:
         pass
+    cdef struct MomentInvariants:
+        pass
 
 cdef extern from "pcl/features/normal_3d.h" namespace "pcl":
     cdef cppclass NormalEstimation[T, N]:
@@ -114,7 +116,7 @@ cdef extern from "pcl/features/moment_invariants.h" namespace "pcl":
         MomentInvariantsEstimation()
         void computePointMomentInvariants (PointCloud[I] &cloud, float &j1, float &j2, float &j3)
 
-ctypedef MomentInvariantsEstimation[PointXYZ,PointXYZ] MomentInvariantsEstimation_t
+ctypedef MomentInvariantsEstimation[PointXYZ,MomentInvariants] MomentInvariantsEstimation_t
 
 cdef extern from "pcl/ModelCoefficients.h" namespace "pcl":
     cdef struct ModelCoefficients:
