@@ -4,6 +4,22 @@
 
 #include "registration_helper.h"
 
+void __mpcl_print_fpfhfloat(const pcl::PointCloud<pcl::FPFHSignature33> &feature_source, const pcl::PointCloud<pcl::FPFHSignature33> &feature_target)
+{
+    printf("Features source size %zu\n", feature_source.size());
+    printf("Features target size %zu\n", feature_target.size());
+    printf("Features source point 0 - in func: ");
+
+    union {
+        pcl::FPFHSignature33 pclsig;
+        float floatsig[33];
+    } p0 = { .pclsig = feature_source[0] };
+    for (int i = 0; i < 33; i++) {
+        printf("%f ", p0.floatsig[i]);
+    }
+    printf("\n");    
+}
+    
 void mpcl_compute_fpfh(pcl::PointCloud<pcl::PointXYZRGB> &cloud_source_ptr, pcl::PointCloud<pcl::PointXYZRGB> &cloud_target_ptr,
     double searchRadius, pcl::PointCloud<pcl::FPFHSignature33> &feature_source_out, pcl::PointCloud<pcl::FPFHSignature33> &feature_target_out)
 {

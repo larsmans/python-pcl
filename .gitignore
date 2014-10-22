@@ -1,4 +1,4 @@
-*.pcd
+/*.pcd
 
 pcl/_pcl.cpp
 pcl/_pcl.html

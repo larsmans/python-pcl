@@ -170,7 +170,7 @@ def icp_nl(_pcl.BasePointCloud source, _pcl.BasePointCloud target,
                                         cpp.PointXYZRGB] icp_nl
     return run(icp_nl, source, target, max_iter)
 	
-def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target, radius=0.05, minSampleDistance=0.05, maxCorrespondenceDistance=0.2, max_iter=None):
+def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None, radius=0.05, minSampleDistance=0.05, maxCorrespondenceDistance=0.2):
     """
     An implementation of the initial alignment algorithm described in section IV
     of "Fast Point Feature Histograms (FPFH) for 3D Registration," Rusu et al. 
