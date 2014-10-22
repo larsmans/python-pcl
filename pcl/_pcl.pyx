@@ -254,7 +254,9 @@ cdef class BasePointCloud:
 
     def __getitem__(self, cnp.npy_intp idx):
         cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr(), idx)
-        return p.x, p.y, p.z
+        cdef cnp.float32_t r, g, b
+        float_to_rgb(&p.rgb, &r, &g, &b)
+        return p.x, p.y, p.z, r, g, b
 
     def from_file(self, char *f):
         """
