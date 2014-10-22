@@ -7,6 +7,17 @@ from libcpp cimport bool
 from shared_ptr cimport shared_ptr
 from vector cimport vector as vector2
 
+cdef extern from "Eigen/Eigen" namespace "Eigen" nogil:
+    cdef cppclass Vector4f:
+        float *data()
+    cdef cppclass Quaternionf:
+        float w()
+        float x()
+        float y()
+        float z()
+    cdef cppclass aligned_allocator[T]:
+        pass
+
 cdef extern from "pcl/point_cloud.h" namespace "pcl":
     cdef cppclass PointCloud[T]:
         PointCloud() except +
@@ -20,6 +31,9 @@ cdef extern from "pcl/point_cloud.h" namespace "pcl":
         #T& at(size_t) except +
         #T& at(int, int) except +
         shared_ptr[PointCloud[T]] makeShared()
+
+        Quaternionf sensor_orientation_
+        Vector4f sensor_origin_
 
 cdef extern from "pcl/point_cloud.h":
     # PCL gets this from Boost, but treats it as if it has no namespace
@@ -85,10 +99,6 @@ ctypedef MovingLeastSquares[PointXYZRGB,PointXYZRGB] MovingLeastSquares_t
 cdef extern from "pcl/search/kdtree.h" namespace "pcl::search":
     cdef cppclass KdTree[T]:
         KdTree()
-
-cdef extern from "Eigen/src/Core/util/Memory.h" namespace "Eigen":
-    cdef cppclass aligned_allocator[T]:
-        pass
 
 ctypedef aligned_allocator[PointXYZRGB] aligned_allocator_t 
 ctypedef vector2[PointXYZRGB, aligned_allocator_t] AlignedPointTVector_t
