@@ -246,9 +246,9 @@ cdef class BasePointCloud:
         for i, l in enumerate(_list):
             p = cpp.getptr(self.thisptr(), i)
             if len(l) == 3:
-                p.x, p.y, p.z = l[0:3]
+                p.x, p.y, p.z = l[0], l[1], l[2]
             elif len(l) == 6:
-                p.x, p.y, p.z = l[0:3]
+                p.x, p.y, p.z = l[0], l[1], l[2]
                 p.rgb = rgb_to_float(l[3], l[4], l[5])
             else:
                 raise ValueError("not a valid point %r" % l)
