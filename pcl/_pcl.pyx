@@ -242,14 +242,6 @@ cdef class BasePointCloud:
     def resize(self, cnp.npy_intp x):
         self.thisptr().resize(x)
 
-    def get_point(self, cnp.npy_intp row, cnp.npy_intp col):
-        """
-        Return a point (6-tuple) at the given row/column
-        """
-        cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr(), row, col)
-        p_r, p_g, p_b = float_to_rgb(p.rgb)
-        return p.x, p.y, p.z, p_r, p_g, p_b
-
     def __getitem__(self, cnp.npy_intp idx):
         cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr(), idx)
         p_r, p_g, p_b = float_to_rgb(p.rgb)

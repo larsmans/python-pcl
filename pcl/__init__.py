@@ -22,22 +22,12 @@ class PointCloud(BasePyPointCloud):
     def __getitem__(self, idx):
         p_x, p_y, p_z, p_r, p_g, p_b = super(BasePyPointCloud, self).__getitem__(idx)
         return p_x, p_y, p_z
-    
-    """3-d point cloud (no color information)."""
-    def get_point(self, row, col):
-        """Return point (3-tuple) at the given row/column."""
-        return self._get_point(row, col)[:3]
 
     def to_array(self):
         """Return this object as a 2D numpy array (float32)."""
         return self._to_array(np.empty((self.size, 3), dtype=np.float32))
 
-class PointCloudXYZRGB(BasePyPointCloud):
-    """3-d point cloud (no color information)."""
-    def get_point(self, row, col):
-        """Return point (3-tuple) at the given row/column."""
-        return self._get_point(row, col)
-    
+class PointCloudXYZRGB(BasePyPointCloud):    
     """3-d point with color information."""
 
     def to_array(self):
