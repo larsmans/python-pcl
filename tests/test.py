@@ -466,7 +466,11 @@ class TestOctreePointCloudSearch(unittest.TestCase):
 
 class TestColour(unittest.TestCase):
     def setUp(self):
-        self.pc = pcl.load("tests/rock.ply")
+        self.pc = pcl.load("tests/rock.ply", loadRGB=True)
 
     def testColour(self):
         self.assertEqual(self.pc.to_array().shape[1], 6)
+        colours = self.pc.to_array()[:,3:6]
+        self.assertGreaterEqual(colours.max(), 0, "All colour info is zero!")
+        self.assertLessEqual(colours.max(), 255, "Colour info out of range!")
+        
