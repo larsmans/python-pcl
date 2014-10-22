@@ -37,11 +37,6 @@ class PointCloudXYZRGB(BasePyPointCloud):
         """Return this object as a 2D numpy array (float32)."""
         return self._to_array(np.empty((self.size, 6), dtype=np.float32))
 
-
-class PointCloudXYZRGB(PointCloud):
-    pass
-
-
 def load(path, format=None):
     """Load pointcloud from path.
 
@@ -50,7 +45,7 @@ def load(path, format=None):
     Format should be "pcd", "ply", or None to infer from the pathname.
     """
     format = _infer_format(path, format)
-    p = PointCloud()
+    p = PointCloudXYZRGB()
     try:
         loader = getattr(p, "_from_%s_file" % format)
     except AttributeError:

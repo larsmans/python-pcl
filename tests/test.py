@@ -8,6 +8,7 @@ import pcl
 import numpy as np
 
 _data = [(i,2*i,3*i+0.2) for i in range(5)]
+_datargb = [(i,2*i,3*i+0.2, 0, 0, 0) for i in range(5)]
 _DATA = \
 """0.0, 0.0, 0.2;
 1.0, 2.0, 3.2;
@@ -30,17 +31,16 @@ class TestListIO(unittest.TestCase):
 
 class TestListIOXYZRGB(unittest.TestCase):
     def setUp(self):
-        self.p = pcl.PointCloudXYZRGB(_data)
+        self.p = pcl.PointCloudXYZRGB(_datargb)
 
     def testFromList(self):
-        for i,d in enumerate(_data):
+        for i,d in enumerate(_datargb):
             pt = self.p[i]
-            assert np.allclose(pt, _data[i])
+            assert np.allclose(pt, _datargb[i])
 
     def testToList(self):
         l = self.p.to_list()
-        assert np.allclose(l, _data)
-
+        assert np.allclose(l, _datargb)
 
 class TestNumpyIO(unittest.TestCase):
     def setUp(self):
@@ -463,3 +463,10 @@ class TestOctreePointCloudSearch(unittest.TestCase):
         rs = self.t.radius_search(good_point, 0.5)
         self.assertEqual(len(rs[0]), 19730)
         self.assertEqual(len(rs[1]), 19730)
+
+class TestColour(unittest.TestCase):
+    def setUp(self):
+        self.pc = pcl.load("tests/rock.ply")
+
+    def testColour(self):
+        self.assertEqual(self.pc.to_array().shape[1], 6)
