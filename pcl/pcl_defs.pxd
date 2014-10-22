@@ -21,6 +21,10 @@ cdef extern from "pcl/point_cloud.h" namespace "pcl":
         #T& at(int, int) except +
         shared_ptr[PointCloud[T]] makeShared()
 
+cdef extern from "pcl/point_cloud.h":
+    # PCL gets this from Boost, but treats it as if it has no namespace
+    ctypedef unsigned long uint32_t
+
 cdef extern from "indexing.hpp":
     # Use these instead of operator[] or at.
     PointXYZRGB *getptr(PointCloud[PointXYZRGB] *, size_t)
