@@ -52,10 +52,10 @@ ctypedef SampleConsensusInitialAlignment[cpp.PointXYZRGB,cpp.PointXYZRGB,FPFHSig
 ctypedef shared_ptr[SampleConsensusInitialAlignment[cpp.PointXYZRGB,cpp.PointXYZRGB,FPFHSignature33]] SampleConsensusInitialAlignmentPtr_t
 
 cdef extern from "registration_helper.h":
-    void mpcl_sample_consensus_initial_alignment_init(
-                            cpp.PointCloud_t, cpp.PointCloud_t,
-                            double searchRadius, double minSampleDistance, double maxCorrespondenceDistance,
-                            SampleConsensusInitialAlignment_t) except +
+    void mpcl_sac_ia_init(cpp.PointCloud_t, cpp.PointCloud_t,
+                          double radius, double minSampleDistance,
+                          double maxCorrespondenceDistance,
+                          SampleConsensusInitialAlignment_t) except +
 
 cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
                 _pcl.BasePointCloud source, _pcl.BasePointCloud target,
@@ -170,7 +170,9 @@ def icp_nl(_pcl.BasePointCloud source, _pcl.BasePointCloud target,
                                         cpp.PointXYZRGB] icp_nl
     return run(icp_nl, source, target, max_iter)
 	
-def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None, radius=0.05, minSampleDistance=0.05, maxCorrespondenceDistance=0.2):
+def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target,
+              max_iter=None, radius=0.05, minSampleDistance=0.05,
+              maxCorrespondenceDistance=0.2):
     """
     An implementation of the initial alignment algorithm described in section IV
     of "Fast Point Feature Histograms (FPFH) for 3D Registration," Rusu et al. 
@@ -195,6 +197,8 @@ def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=N
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef SampleConsensusInitialAlignment[cpp.PointXYZRGB, cpp.PointXYZRGB, FPFHSignature33] ia_ransac
-    mpcl_sample_consensus_initial_alignment_init(deref(source.thisptr()), deref(target.thisptr()), radius, minSampleDistance, maxCorrespondenceDistance, ia_ransac)
+    cdef SampleConsensusInitialAlignment[cpp.PointXYZRGB, cpp.PointXYZRGB,
+                                         FPFHSignature33] ia_ransac
+    mpcl_sac_ia_init(deref(source.thisptr()), deref(target.thisptr()), radius,
+                     minSampleDistance, maxCorrespondenceDistance, ia_ransac)
     return run(ia_ransac, source, target, max_iter)
