@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import numpy as np
 from numpy import cos, sin
+from numpy.testing import assert_equal
 import unittest
 
 import pcl
@@ -28,21 +29,21 @@ class TestICP(unittest.TestCase):
                  [ 0,              0,              1            ]]
         transform = np.dot(rot_x, np.dot(rot_y, rot_z))
 
-        print("---------")
-        print("Rotation: ")
-        print(transform[0:3,0:3])
+        #print("---------")
+        #print("Rotation: ")
+        #print(transform[0:3,0:3])
         # print("Translation: ", transform[3, 0:3])
-        print("---------")
+        #print("---------")
 
         random_cloud = np.random.RandomState(42).randn(900, 3)
-        # print(cloud.)
-        self.source = pcl.BasePointCloud(random_cloud.astype(np.float32))
-        self.target = pcl.BasePointCloud(np.dot(random_cloud, transform).astype(np.float32))
-    
+        self.source = pcl.PointCloud(random_cloud.astype(np.float32))
+        a = np.dot(random_cloud, transform).astype(np.float32)
+        self.target = pcl.PointCloud(a)
+
     def setUpBunny(self):
-        self.source = pcl.BasePointCloud()
+        self.source = pcl.PointCloud()
         self.source.from_file("tests/bun0.pcd")
-        self.target = pcl.BasePointCloud()
+        self.target = pcl.PointCloud()
         self.target.from_file("tests/bun4.pcd")
 
     def setUp(self):
@@ -72,24 +73,20 @@ class TestICP(unittest.TestCase):
         
 #         estimate.to_file("tests/output" + `algo` + ".pcd");
 
+        assert_equal(transf[3], [0, 0, 0, 1])
+
         # XXX I think I misunderstand fitness, it's not equal to the following
         # MSS.
-        # mss = (np.linalg.norm(estimate.to_array()
-        #                       - self.source.to_array(), axis=1) ** 2).mean()
-        # self.assertLess(mss, 1)
-
-        
-        
 
     def testICP(self):
         self.check_algo(icp)
-   
+
     def testGICP(self):
         self.check_algo(gicp)
 
     def testICP_NL(self):
         self.check_algo(icp_nl)
-        
+
     def testIA_RANSAC(self):
         # reducing radius makes this test fail
         # reducing the max_iter to 1000 makes the test fail

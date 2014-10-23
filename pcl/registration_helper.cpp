@@ -4,14 +4,20 @@
 
 #include "registration_helper.h"
 
-void __mpcl_print_fpfhfloat(const pcl::PointCloud<pcl::FPFHSignature33> &feature_source, const pcl::PointCloud<pcl::FPFHSignature33> &feature_target)
+using pcl::FPFHSignature33;
+using pcl::PointCloud;
+using pcl::PointXYZRGB;
+
+#if 0
+static void mpcl_print_fpfhfloat(const PointCloud<FPFHSignature33> &feature_source,
+                                 const PointCloud<FPFHSignature33> &feature_target)
 {
     printf("Features source size %zu\n", feature_source.size());
     printf("Features target size %zu\n", feature_target.size());
     printf("Features source point 0 - in func: ");
 
     union {
-        pcl::FPFHSignature33 pclsig;
+        FPFHSignature33 pclsig;
         float floatsig[33];
     } p0 = { .pclsig = feature_source[0] };
     for (int i = 0; i < 33; i++) {
@@ -19,19 +25,23 @@ void __mpcl_print_fpfhfloat(const pcl::PointCloud<pcl::FPFHSignature33> &feature
     }
     printf("\n");    
 }
+#endif
     
-void mpcl_compute_fpfh(pcl::PointCloud<pcl::PointXYZRGB> &cloud_source_ptr, pcl::PointCloud<pcl::PointXYZRGB> &cloud_target_ptr,
-    double searchRadius, pcl::PointCloud<pcl::FPFHSignature33> &feature_source_out, pcl::PointCloud<pcl::FPFHSignature33> &feature_target_out)
+void mpcl_compute_fpfh(PointCloud<PointXYZRGB> &cloud_source_ptr,
+                       PointCloud<PointXYZRGB> &cloud_target_ptr,
+                       double searchRadius,
+                       PointCloud<FPFHSignature33> &feature_source_out,
+                       PointCloud<FPFHSignature33> &feature_target_out)
 {
     // Initialize estimators for surface normals and FPFH features
-    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+    pcl::search::KdTree<PointXYZRGB>::Ptr tree (new pcl::search::KdTree<PointXYZRGB> ());
 
-    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
+    pcl::NormalEstimation<PointXYZRGB, pcl::Normal> norm_est;
     norm_est.setSearchMethod (tree);
     norm_est.setRadiusSearch (searchRadius); // 0.05
-    pcl::PointCloud<pcl::Normal> normals;
+    PointCloud<pcl::Normal> normals;
 
-    pcl::FPFHEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh_est;
+    pcl::FPFHEstimation<PointXYZRGB, pcl::Normal, FPFHSignature33> fpfh_est;
     fpfh_est.setSearchMethod (tree);
     fpfh_est.setRadiusSearch (searchRadius); // 0.05
 
@@ -51,14 +61,17 @@ void mpcl_compute_fpfh(pcl::PointCloud<pcl::PointXYZRGB> &cloud_source_ptr, pcl:
     fpfh_est.compute (feature_target_out);
 }
 
-void mpcl_sample_consensus_initial_alignment_init(pcl::PointCloud<pcl::PointXYZRGB> &cloud_source_ptr,
-                                            pcl::PointCloud<pcl::PointXYZRGB> &cloud_target_ptr,
-                                            double searchRadius, double minSampleDistance, double maxCorrespondenceDistance,
-                                            pcl::SampleConsensusInitialAlignment<pcl::PointXYZRGB, pcl::PointXYZRGB, pcl::FPFHSignature33> &reg)
+void mpcl_sac_ia_init(PointCloud<PointXYZRGB> &cloud_source_ptr,
+                      PointCloud<PointXYZRGB> &cloud_target_ptr,
+                      double searchRadius, double minSampleDistance,
+                      double maxCorrespondenceDistance,
+                      pcl::SampleConsensusInitialAlignment<PointXYZRGB, PointXYZRGB,
+                                                           FPFHSignature33> &reg)
 {
-    pcl::PointCloud<pcl::FPFHSignature33> features_source, features_target;
+    PointCloud<FPFHSignature33> features_source, features_target;
     // estimate features
-    mpcl_compute_fpfh(cloud_source_ptr, cloud_target_ptr, searchRadius, features_source, features_target);
+    mpcl_compute_fpfh(cloud_source_ptr, cloud_target_ptr, searchRadius,
+                      features_source, features_target);
     
     // Initialize Sample Consensus Initial Alignment (SAC-IA)
     reg.setMinSampleDistance (minSampleDistance); // 0.05

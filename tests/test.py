@@ -7,7 +7,7 @@ import unittest
 import pcl
 import numpy as np
 
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 
 _data = [(i,2*i,3*i+0.2) for i in range(5)]
@@ -160,6 +160,13 @@ DATA ascii
     assert_array_equal(p.sensor_origin,
                        np.array([.1, 0, .5, 0], dtype=np.float32))
 
+
+def test_copy():
+    a = np.random.randn(100, 3).astype(np.float32)
+    p1 = pcl.PointCloud(a)
+    p2 = pcl.PointCloud(p1)
+    assert_array_equal(p2.to_array(), a)
+
 SEGCYLMOD = [0.0552167, 0.0547035, 0.757707, -0.0270852, -4.41026, -2.88995, 0.0387603]
 SEGCYLIN = 11462
 
@@ -291,6 +298,23 @@ class TestExceptions(unittest.TestCase):
         # negative argument. Don't hesitate to change this test to reflect
         # better exceptions.
         self.assertRaises(MemoryError, self.p.resize, -1)
+
+class TestTransform(unittest.TestCase):
+    def setUp(self):
+        self.p = pcl.PointCloud(np.random.randn(10, 3).astype(np.float32))
+
+    def test_transform(self):
+        p = pcl.PointCloud(self.p)
+        t = np.random.randn(4, 4)
+        t[3] = [0, 0, 0, 1]
+        p.transform(t)
+
+        a = np.hstack([self.p.to_array(), np.ones(len(self.p)).reshape(-1, 1)])
+        transformed = np.dot(t, a.T).T[:, :3]
+        assert_array_almost_equal(transformed, p.to_array())
+
+    def test_invalid(self):
+        self.assertRaises(ValueError, self.p.transform, np.random.randn(20, 3))
 
 class TestSegmenterNormal(unittest.TestCase):
     def setUp(self):

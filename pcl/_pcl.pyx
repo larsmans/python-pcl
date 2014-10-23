@@ -146,6 +146,8 @@ cdef class SegmentationNormal:
 # to keep the code simple.
 cdef class BasePointCloud:
     def __cinit__(self, init=None):
+        cdef BasePointCloud other
+
         sp_assign(self.thisptr_shared, new cpp.PointCloud[cpp.PointXYZRGB]())
 
         if init is None:
@@ -156,6 +158,9 @@ cdef class BasePointCloud:
             self.from_array(init)
         elif isinstance(init, Sequence):
             self.from_list(init)
+        elif isinstance(init, type(self)):
+            other = init
+            self.thisptr()[0] = other.thisptr()[0]
         else:
             raise TypeError("Can't initialize a PointCloud from a %s"
                             % type(init))
@@ -255,6 +260,19 @@ cdef class BasePointCloud:
 
     def resize(self, cnp.npy_intp x):
         self.thisptr().resize(x)
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def _transform4(self, cnp.ndarray[ndim=2, dtype=cnp.float32_t] t):
+        cdef cpp.Matrix4f t_eigen
+        cdef float *t_e_data = t_eigen.data()
+        cdef int i, j
+
+        for i in range(4):
+            for j in range(4):
+                t_e_data[i * 4 + j] = t[j, i]
+
+        cpp.transformPointCloud(self.thisptr()[0], self.thisptr()[0], t_eigen)
 
     def get_point(self, cnp.npy_intp row, cnp.npy_intp col):
         """
