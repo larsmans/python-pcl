@@ -187,6 +187,12 @@ def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target,
     max_iter : integer, optional
         Maximum number of iterations. If not given, uses the default number
         hardwired into PCL.
+    radius : double
+        Radius in which neighbours are searched for in the NormalEstimation algorithm.
+    minSampleDistance : double
+        Set the minimum distances between samples.
+    maxCorrespondenceDistance : double
+        Set the maximum distance threshold between two correspondent points in source <-> target.
 
     Returns
     -------
