@@ -2,12 +2,15 @@
 Run the registration algorithm on PCD or ply files files.
 """
 
+from __future__ import print_function
+
 import argparse
 import pcl
 import pcl.registration
 import liblas
 import numpy as np
 import time
+import sys
 
 def loadLas(lasFile):
     las = liblas.file.File(lasFile)
@@ -49,12 +52,19 @@ def process_args(args):
         'icp_nl': pcl.registration.icp_nl,
         'ia_ransac': pcl.registration.ia_ransac
     }
-    
-    if args.function in funcs:
-        algo = funcs[args.function]
-    else:
+
+    if args.function == None:
         algo = pcl.registration.gicp
-    
+    else:
+        try:
+            algo = funcs[args.function]
+        except KeyError:
+            print("Unknown algorithm {!r}".format(args.function), file=sys.stderr)
+            print("Valid algorithms are:", file=sys.stderr)
+            for algo in funcs:
+                print("    {!r}".format(algo))
+            sys.exit(1)
+
     return source, target, algo
 
 def print_output(algo, converged, transf, fitness):
