@@ -256,9 +256,12 @@ cdef class BasePointCloud:
     def resize(self, cnp.npy_intp x):
         self.thisptr().resize(x)
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
     def _transform4(self, cnp.ndarray[ndim=2, dtype=cnp.float32_t] t):
         cdef cpp.Matrix4f t_eigen
         cdef float *t_e_data = t_eigen.data()
+        cdef int i, j
 
         for i in range(4):
             for j in range(4):
