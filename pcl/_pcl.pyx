@@ -719,3 +719,27 @@ cdef class OctreePointCloudSearch(OctreePointCloud):
             np_k_indices[i] = k_indices[i]
         return np_k_indices, np_k_sqr_distances
 
+cdef class SIFTKeypoint:
+    """
+    SIFT keypoint detection
+    """
+    cdef cpp.SIFTKeypoint_t *me
+     
+    def __cinit__(self):
+        self.me = <cpp.SIFTKeypoint_t*> new cpp.SIFTKeypoint_t()
+     
+    def setScales(self, min_scale, nr_octaves, nr_scales_per_octave):
+        (<cpp.SIFTKeypoint_t*> self.me).setScales(min_scale, nr_octaves, nr_scales_per_octave)
+          
+    def setMinimumContrast (self, min_contrast):
+        (self.me).setMinimumContrast(min_contrast)
+         
+    def setInputCloud(self, BasePointCloud cloud_xyzrgb not None, int ksearch=-1, double searchRadius=-1.0): 
+        self.me.setInputCloud(cloud_xyzrgb.thisptr_shared)
+     
+    def compute(self):
+        cdef BasePointCloud result = self._pc_type()        
+        self.me.compute(result.thisptr_shared)
+        return result
+         
+#setMinimumContrast (float min_contrast)

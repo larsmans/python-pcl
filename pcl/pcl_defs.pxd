@@ -40,6 +40,8 @@ cdef extern from "pcl/point_types.h" namespace "pcl":
         float rgb
     cdef struct Normal:
         pass
+    cdef struct PointWithScale:
+        pass
 
 cdef extern from "pcl/features/normal_3d.h" namespace "pcl":
     cdef cppclass NormalEstimation[T, N]:
@@ -222,3 +224,15 @@ cdef extern from "pcl/kdtree/kdtree_flann.h" namespace "pcl":
           int, int, vector[int], vector[float])
 
 ctypedef KdTreeFLANN[PointXYZRGB] KdTreeFLANN_t
+
+cdef extern from "pcl/keypoints/sift_keypoint.h" namespace "pcl":
+    cdef cppclass SIFTKeypoint[I, O]:
+        SIFTKeypoint()
+        void setScales(float, int, int)
+        void setMinimumContrast(float)
+        void setInputCloud(shared_ptr[PointCloud[I]])
+        void compute(shared_ptr[PointCloud[I]]);
+         
+ctypedef SIFTKeypoint[PointXYZRGB, PointWithScale] SIFTKeypoint_t
+
+
