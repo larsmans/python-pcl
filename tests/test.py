@@ -292,6 +292,18 @@ class TestExceptions(unittest.TestCase):
         # better exceptions.
         self.assertRaises(MemoryError, self.p.resize, -1)
 
+class TestTransform(unittest.TestCase):
+    def setUp(self):
+        self.p = pcl.PointCloud(np.random.randn(10, 3).astype(np.float32))
+
+    def test_transform(self):
+        # Just a sanity check that it doesn't crash.
+        t = np.random.randn(4, 4)
+        self.p.transform(t)
+
+    def test_invalid(self):
+        self.assertRaises(ValueError, self.p.transform, np.random.randn(20, 3))
+
 class TestSegmenterNormal(unittest.TestCase):
     def setUp(self):
         self.p = pcl.load("tests/table_scene_mug_stereo_textured_noplane.pcd")

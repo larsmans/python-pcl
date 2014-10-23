@@ -27,6 +27,7 @@ class BasePyPointCloud(BasePointCloud):
         self : point cloud
             Returns self, for convenience.
         """
+        t = np.asarray(t, dtype=np.float32)
         if t.shape != (4, 4):
             raise ValueError("not a rigid transform: %r" % t)
 
