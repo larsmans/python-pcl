@@ -256,6 +256,16 @@ cdef class BasePointCloud:
     def resize(self, cnp.npy_intp x):
         self.thisptr().resize(x)
 
+    def _transform4(self, cnp.ndarray[ndim=2, dtype=cnp.float32_t] t):
+        cdef cpp.Matrix4f t_eigen
+        cdef float *t_e_data = t_eigen.data()
+
+        for i in range(4):
+            for j in range(4):
+                t_e_data[i * 4 + j] = t[i, j]
+
+        cpp.transformPointCloud(self.thisptr()[0], self.thisptr()[0], t_eigen)
+
     def get_point(self, cnp.npy_intp row, cnp.npy_intp col):
         """
         Return a point (6-tuple) at the given row/column

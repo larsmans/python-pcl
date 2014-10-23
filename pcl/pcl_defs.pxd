@@ -10,6 +10,8 @@ from vector cimport vector as vector2
 cdef extern from "Eigen/Eigen" namespace "Eigen" nogil:
     cdef cppclass Vector4f:
         float *data()
+    cdef cppclass Matrix4f:
+        float *data()
     cdef cppclass Quaternionf:
         float w()
         float x()
@@ -193,6 +195,9 @@ cdef extern from "pcl/sample_consensus/method_types.h" namespace "pcl":
 ctypedef PointCloud[PointXYZRGB] PointCloud_t
 ctypedef PointCloud[Normal] PointNormalCloud_t
 ctypedef shared_ptr[PointCloud[PointXYZRGB]] PointCloudPtr_t
+
+cdef extern from "pcl/common/transforms.h" namespace "pcl" nogil:
+    cdef void transformPointCloud(PointCloud_t &, PointCloud_t &, Matrix4f)
 
 cdef extern from "pcl/filters/statistical_outlier_removal.h" namespace "pcl":
     cdef cppclass StatisticalOutlierRemoval[T]:

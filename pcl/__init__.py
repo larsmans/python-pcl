@@ -14,6 +14,25 @@ class BasePyPointCloud(BasePointCloud):
     def __reduce__(self):
         return type(self), (self.to_array(),)
 
+    def transform(self, t):
+        """Apply rigid transformation t, in-place.
+
+        Parameters
+        ----------
+        t : ndarray, shape (4, 4)
+            Rigid transformation.
+
+        Returns
+        -------
+        self : point cloud
+            Returns self, for convenience.
+        """
+        if t.shape != (4, 4):
+            raise ValueError("not a rigid transform: %r" % t)
+
+        self._transform4(t)
+        return self
+
     def to_list(self):
         """Return this object as a list of tuples."""
         return self.to_array().tolist()
