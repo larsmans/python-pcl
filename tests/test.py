@@ -7,7 +7,7 @@ import unittest
 import pcl
 import numpy as np
 
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 
 _data = [(i,2*i,3*i+0.2) for i in range(5)]
@@ -304,9 +304,14 @@ class TestTransform(unittest.TestCase):
         self.p = pcl.PointCloud(np.random.randn(10, 3).astype(np.float32))
 
     def test_transform(self):
-        # Just a sanity check that it doesn't crash.
+        p = pcl.PointCloud(self.p)
         t = np.random.randn(4, 4)
-        self.p.transform(t)
+        t[3] = [0, 0, 0, 1]
+        p.transform(t)
+
+        a = np.hstack([self.p.to_array(), np.ones(len(self.p)).reshape(-1, 1)])
+        transformed = np.dot(t, a.T).T[:, :3]
+        assert_array_almost_equal(transformed, p.to_array())
 
     def test_invalid(self):
         self.assertRaises(ValueError, self.p.transform, np.random.randn(20, 3))

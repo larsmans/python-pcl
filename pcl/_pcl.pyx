@@ -270,7 +270,7 @@ cdef class BasePointCloud:
 
         for i in range(4):
             for j in range(4):
-                t_e_data[i * 4 + j] = t[i, j]
+                t_e_data[i * 4 + j] = t[j, i]
 
         cpp.transformPointCloud(self.thisptr()[0], self.thisptr()[0], t_eigen)
 
