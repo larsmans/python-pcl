@@ -32,13 +32,13 @@ class TestICP(unittest.TestCase):
 
         random_cloud = np.random.RandomState(42).randn(900, 3)
         # print(cloud.)
-        self.source = pcl.BasePointCloud(random_cloud.astype(np.float32))
-        self.target = pcl.BasePointCloud(np.dot(random_cloud, transform).astype(np.float32))
+        self.source = pcl.PointCloud(random_cloud.astype(np.float32))
+        self.target = pcl.PointCloud(np.dot(random_cloud, transform).astype(np.float32))
     
     def setUpBunny(self):
-        self.source = pcl.BasePointCloud()
+        self.source = pcl.PointCloud()
         self.source.from_file("tests/bun0.pcd")
-        self.target = pcl.BasePointCloud()
+        self.target = pcl.PointCloud()
         self.target.from_file("tests/bun4.pcd")
 
     def setUp(self):
@@ -56,9 +56,9 @@ class TestICP(unittest.TestCase):
 
         # XXX I think I misunderstand fitness, it's not equal to the following
         # MSS.
-        # mss = (np.linalg.norm(estimate.to_array()
-        #                       - self.source.to_array(), axis=1) ** 2).mean()
-        # self.assertLess(mss, 1)
+        mss = (np.linalg.norm(estimate.to_array()
+                              - self.source.to_array(), axis=1) ** 2).mean()
+        self.assertLess(mss, 1)
 
         # TODO check the actual transformation matrix.
         # print("------", algo)
