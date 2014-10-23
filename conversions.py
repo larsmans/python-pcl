@@ -8,17 +8,25 @@ import liblas
 import pcl
 import numpy as np
 
-def las2ply(lasFile, plyFile):
+def loadLas(lasFile):
     las = liblas.file.File(lasFile)
     nPoints = las.header.get_count()
-    data_xyz = np.zeros((nPoints, 3))
-    scale = las.header.scale
+    data_xyz = np.zeros((nPoints, 6), dtype=np.float64)
+    min_point = np.array(las.header.get_min())
+    max_point = np.array(las.header.get_max())
+    offset = min_point + (max_point - min_point)/2
 
     for i,point in enumerate(las):
-        data_xyz[i,:] = point.x,point.y,point.z
-        data_xyz[i,:] /= scale 
+        data_xyz[i,0:3] = point.x,point.y,point.z
+        data_xyz[i,0:3] -= offset
+        data_xyz[i,3:6] = point.color.red,point.color.green,point.color.blue
+        data_xyz[i,3:6] /= 256
 
-    pc = pcl.PointCloud(data_xyz.astype(np.float32))
+    pc = pcl.PointCloudXYZRGB(data_xyz.astype(np.float32))
+    return pc, offset
+
+def las2ply(lasFile, plyFile):
+    pc, offset = loadLas(lasFile)
     pcl.save(pc, plyFile, format='PLY')
 
 def ply2las(plyFile, lasFile):
@@ -31,18 +39,10 @@ def ply2las(plyFile, lasFile):
     f.close()
 
 if __name__ == '__main__':
-#    lasFile = 'tests/Rome-000062.las'
-#    plyFile = 'tests/Rome-000062.ply'
-#    las2ply(lasFile, plyFile)
+    plyFile = 'tests/10.ply'
+    lasFile = 'tests/10.las'
 
-    plyFile = 'tests/rock.ply'
-    lasFile = 'tests/rock.las'
-
-    print 'converting forward...'
-    ply2las(plyFile,lasFile)
-
-    print 'converting back...'
-    plyFile = 'tests/rock2.ply'
+    print 'From las to ply...'
     las2ply(lasFile, plyFile)
 
 
