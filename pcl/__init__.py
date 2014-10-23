@@ -5,6 +5,9 @@ import sys
 
 
 class BasePyPointCloud(BasePointCloud):
+    def __len__(self):
+        return self.size
+
     def __repr__(self):
         return "<%s of %d points>" % (type(self).__name__, self.size)
 
