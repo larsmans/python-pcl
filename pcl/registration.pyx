@@ -31,10 +31,15 @@ cdef extern from "pcl/registration/registration.h" namespace "pcl" nogil:
         void setInputSource(cpp.PointCloudPtr_t) except +
         void setInputTarget(cpp.PointCloudPtr_t) except +
         void setMaximumIterations(int) except +
+        void setTransformationEpsilon(double) except +
+        void setEuclideanFitnessEpsilon(double) except +
 
 cdef extern from "pcl/registration/icp.h" namespace "pcl" nogil:
     cdef cppclass IterativeClosestPoint[Source, Target](Registration[Source, Target]):
         IterativeClosestPoint() except +
+
+ctypedef IterativeClosestPoint[cpp.PointXYZRGB,cpp.PointXYZRGB] IterativeClosestPoint_t
+ctypedef shared_ptr[IterativeClosestPoint[cpp.PointXYZRGB,cpp.PointXYZRGB]] IterativeClosestPointPtr_t
 
 cdef extern from "pcl/registration/gicp.h" namespace "pcl" nogil:
     cdef cppclass GeneralizedIterativeClosestPoint[Source, Target](Registration[Source, Target]):
@@ -55,16 +60,22 @@ cdef extern from "registration_helper.h":
     void mpcl_sac_ia_init(cpp.PointCloud_t, cpp.PointCloud_t,
                           double radius, double minSampleDistance,
                           double maxCorrespondenceDistance,
-                          SampleConsensusInitialAlignment_t) except +
+                          SampleConsensusInitialAlignment_t) except +    
 
 cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
                 _pcl.BasePointCloud source, _pcl.BasePointCloud target,
-                max_iter=None):
+                max_iter=None, transformationEpsilon=None, euclideanFitnessEpsilon=None):
     reg.setInputSource(source.thisptr_shared)
     reg.setInputTarget(target.thisptr_shared)
 
     if max_iter is not None:
         reg.setMaximumIterations(max_iter)
+        
+    if transformationEpsilon is not None:
+        reg.setTransformationEpsilon(transformationEpsilon)
+    
+    if euclideanFitnessEpsilon is not None:
+        reg.setEuclideanFitnessEpsilon(euclideanFitnessEpsilon)
 
     cdef _pcl.BasePointCloud result = type(source)()
 
@@ -85,7 +96,9 @@ cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
 
     return reg.hasConverged(), transf, result, reg.getFitnessScore()
 
-def icp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None):
+def icp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None, 
+              transformationEpsilon=None, euclideanFitnessEpsilon=None):
+    
     """Align source to target using iterative closest point (ICP).
 
     Parameters
@@ -97,6 +110,10 @@ def icp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None):
     max_iter : integer, optional
         Maximum number of iterations. If not given, uses the default number
         hardwired into PCL.
+    transformationEpsilon : double, optional
+        Maximum difference between two consecutive transformations, before the algorithm is considered to have converged. If not given, uses the default number
+    euclideanFitnessEpsilon : double, optional
+        Maximum Euclidean error between two consecutive steps in the ICP loop, before the algorithm is considered to have converged. If not given, uses the default number
 
     Returns
     -------
@@ -109,8 +126,12 @@ def icp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None):
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef IterativeClosestPoint[cpp.PointXYZRGB, cpp.PointXYZRGB] icp
-    return run(icp, source, target, max_iter)
+    cdef IterativeClosestPoint[cpp.PointXYZRGB, cpp.PointXYZRGB] icp    
+        
+    #mpcl_icp_init(deref(source.thisptr()), deref(target.thisptr()), transformationEpsilon, 
+    #              euclideanFitnessEpsilon, icp)    
+    
+    return run(icp, source, target, max_iter, transformationEpsilon, euclideanFitnessEpsilon)
 
 
 def gicp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None):
