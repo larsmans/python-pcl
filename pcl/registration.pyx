@@ -108,12 +108,12 @@ def icp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None,
     target : point cloud
         Target point cloud.
     max_iter : integer, optional
-        Maximum number of iterations. If not given, uses the default number
+        Maximum number of iterations. If not given, uses the pcl default (10)
         hardwired into PCL.
     transformationEpsilon : double, optional
-        Maximum difference between two consecutive transformations, before the algorithm is considered to have converged. If not given, uses the default number
+        Maximum difference between two consecutive transformations, before the algorithm is considered to have converged. If not given, uses the pcl default (0)
     euclideanFitnessEpsilon : double, optional
-        Maximum Euclidean error between two consecutive steps in the ICP loop, before the algorithm is considered to have converged. If not given, uses the default number
+        Maximum Euclidean error between two consecutive steps in the ICP loop, before the algorithm is considered to have converged. If not given, uses the pcl default (max) 
 
     Returns
     -------

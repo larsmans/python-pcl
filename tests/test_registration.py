@@ -39,7 +39,7 @@ class TestICP(unittest.TestCase):
         self.source = pcl.PointCloud(random_cloud.astype(np.float32))
         a = np.dot(random_cloud, transform).astype(np.float32)
         self.target = pcl.PointCloud(a)
-
+        
     def setUpBunny(self):
         self.source = pcl.PointCloud()
         self.source.from_file("tests/bun0.pcd")
@@ -48,35 +48,14 @@ class TestICP(unittest.TestCase):
 
     def setUp(self):
         self.setUpBunny()
-        # self.setUpRandom()
 
     def check_algo(self, algo, max_iter=1000, **kwargs):
         converged, transf, estimate, fitness = algo(self.source, self.target,
                                                     max_iter=max_iter, **kwargs)
-#         print("------", algo)
-#         print("Converged: ", converged, "Estimate: ", estimate,
-#              "Fitness: ", fitness)
-#         print("Rotation: ")
-#         print(transf[0:3,0:3])
-#         print("Complete: ")
-#         print(transf)
-#         print("Translation: ", transf[3, 0:3])
-#         print("---------")
-        
-        #self.assertTrue(converged is True) # Commented out because Ransac doesn't think it's converged even though transf is ok
-        #self.assertLess(fitness, .1) # Commented out because we don't know what fitness is or whether it is important at all
-
         self.assertTrue(isinstance(transf, np.ndarray))
         self.assertEqual(transf.shape, (4, 4))
-        
         np.testing.assert_allclose(bun0Tobun4, transf, 0, 0.1)
-        
-#         estimate.to_file("tests/output" + `algo` + ".pcd");
-
         assert_equal(transf[3], [0, 0, 0, 1])
-
-        # XXX I think I misunderstand fitness, it's not equal to the following
-        # MSS.
 
     def testICP(self):
         self.check_algo(icp)
@@ -86,8 +65,28 @@ class TestICP(unittest.TestCase):
 
     def testICP_NL(self):
         self.check_algo(icp_nl)
-
+    
     def testIA_RANSAC(self):
         # reducing radius makes this test fail
         # reducing the max_iter to 1000 makes the test fail
         self.check_algo(ia_ransac, radius=0.5, minSampleDistance=0.01, maxCorrespondenceDistance=0.5, max_iter=10000)
+        
+    def testICP_setMaxIterations1vs2_transformationMatricesShouldBeUnequal(self):
+        _, transf1, _, _ = icp(self.source, self.target, max_iter=1)        
+        _, transf2, _, _ = icp(self.source, self.target, max_iter=2)
+        self.assertFalse(np.allclose(transf1, transf2, 0, 0.1), "First and second transformation should be unequal in this complicated registration.")
+        
+    def testICP_setTransformationEpsilon0vs1_transformationMatricesShouldBeUnequal(self):
+        _, transf1, _, _ = icp(self.source, self.target, transformationEpsilon=0)        
+        _, transf2, _, _ = icp(self.source, self.target, transformationEpsilon=1)
+        self.assertFalse(np.allclose(transf1, transf2, 0, 0.1), "Transformations should be unequal with different stopping criteria.")
+    
+    def testICP_setEuclideanFitnessEpsilon0vs1_transformationMatricesShouldBeUnequal(self):
+        _, transf1, _, _ = icp(self.source, self.target, euclideanFitnessEpsilon=0)        
+        _, transf2, _, _ = icp(self.source, self.target, euclideanFitnessEpsilon=1)
+        self.assertFalse(np.allclose(transf1, transf2, 0, 0.1), "Transformations should be unequal with different stopping criteria.")      
+      
+        
+        
+        
+        
