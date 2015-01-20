@@ -4,10 +4,6 @@ Created on Oct 22, 2014
 @author: carlosm
 '''
 
-# TODO: liblas is deprecated, use laspy instead!
-# http://laspy.readthedocs.org/en/latest/
-# https://github.com/grantbrown/laspy.git
-
 import liblas
 import pcl
 import numpy as np
