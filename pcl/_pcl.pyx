@@ -11,6 +11,9 @@ cimport pcl_defs as cpp
 
 cimport cython
 from cython.operator import dereference as deref
+
+from cpython cimport Py_buffer
+
 from libcpp.string cimport string
 from libcpp cimport bool
 from libcpp.cast cimport reinterpret_cast
@@ -141,12 +144,29 @@ cdef class SegmentationNormal:
     def set_axis(self, double ax, double ay, double az):
         mpcl_sacnormal_set_axis(deref(self.me),ax,ay,az)
 
+
+# Empirically determine strides, for buffer support.
+# XXX Is there a more elegant way to get these?
+cdef Py_ssize_t _strides[2]
+cdef BasePointCloud _pc_tmp = BasePointCloud(np.array([[1, 2, 3],
+                                                       [4, 5, 6]],
+                                                      dtype=np.float32))
+cdef cpp.PointCloud[cpp.PointXYZRGB] *p = _pc_tmp.thisptr()
+_strides[0] = (  <Py_ssize_t><void *>cpp.getptr(p, 1)
+               - <Py_ssize_t><void *>cpp.getptr(p, 0))
+_strides[1] = (  <Py_ssize_t><void *>&(cpp.getptr(p, 0).y)
+               - <Py_ssize_t><void *>&(cpp.getptr(p, 0).x))
+_pc_tmp = None
+
+
 # Base class for point clouds: stores XYZ and RGB information.
 # RGB takes four bytes per point, but we just take the hit
 # to keep the code simple.
 cdef class BasePointCloud:
     def __cinit__(self, init=None):
         cdef BasePointCloud other
+
+        self._view_count = 0
 
         sp_assign(self.thisptr_shared, new cpp.PointCloud[cpp.PointXYZRGB]())
 
@@ -177,6 +197,32 @@ cdef class BasePointCloud:
     property is_dense:
         """ property containing whether the cloud is dense or not """
         def __get__(self): return self.thisptr().is_dense
+
+    # Buffer protocol support. Taking a view locks the pointcloud for
+    # resizing, because that can move it around in memory.
+    def __getbuffer__(self, Py_buffer *buffer, int flags):
+        # TODO parse flags
+        cdef Py_ssize_t npoints = self.thisptr().size()
+
+        if self._view_count == 0:
+            self._view_count += 1
+            self._shape[0] = npoints
+            self._shape[1] = 3
+
+        buffer.buf = <char *>&(cpp.getptr_at(self.thisptr(), 0).x)
+        buffer.format = 'f'
+        buffer.internal = NULL
+        buffer.itemsize = sizeof(float)
+        buffer.len = npoints * 3 * sizeof(float)
+        buffer.ndim = 2
+        buffer.obj = self
+        buffer.readonly = 0
+        buffer.shape = self._shape
+        buffer.strides = _strides
+        buffer.suboffsets = NULL
+
+    def __releasebuffer__(self, Py_buffer *buffer):
+        self._view_count -= 1
 
     property sensor_origin:
         def __get__(self):
@@ -259,6 +305,9 @@ cdef class BasePointCloud:
                 raise ValueError("not a valid point %r" % l)
 
     def resize(self, cnp.npy_intp x):
+        if self._view_count > 0:
+            raise ValueError("can't resize PointCloud while there are"
+                             " arrays/memoryviews referencing it")
         self.thisptr().resize(x)
 
     @cython.boundscheck(False)
