@@ -1,4 +1,5 @@
 #include <pcl/point_types.h>
+#include <pcl/features/boundary.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/filters/extract_indices.h>
@@ -23,6 +24,34 @@ void mpcl_compute_normals(pcl::PointCloud<pcl::PointXYZRGB> &cloud,
     if (searchRadius >= 0.0)
         ne.setRadiusSearch (searchRadius);
     ne.compute (out);
+}
+
+// Boundary estimation (uses normal estimation, hence the parameters).
+void mpcl_estimate_boundaries(pcl::PointCloud<pcl::PointXYZRGB> &cloud,
+                              float angle_threshold,
+                              double search_radius,
+                              int normal_ksearch,
+                              double normal_search_radius,
+                              char *out, size_t n)
+{
+    pcl::PointCloud<pcl::Normal> normals;
+    mpcl_compute_normals(cloud, normal_ksearch, normal_search_radius, normals);
+    pcl::PointCloud<pcl::Boundary> boundaries;
+    pcl::BoundaryEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::Boundary> est;
+    est.setInputCloud(cloud.makeShared());
+    est.setInputNormals(normals.makeShared());
+
+    if (search_radius >= 0) {
+        est.setRadiusSearch(search_radius);
+    }
+
+    est.setSearchMethod(typename pcl::search::KdTree<pcl::PointXYZRGB>::Ptr(
+                            new pcl::search::KdTree<pcl::PointXYZRGB>));
+    est.compute(boundaries);
+
+    for (size_t i = 0; i < n; i++) {
+        out[i] = boundaries[i].boundary_point;
+    }
 }
 
 void mpcl_sacnormal_set_axis(pcl::SACSegmentationFromNormals<pcl::PointXYZRGB, pcl::Normal> &sac,

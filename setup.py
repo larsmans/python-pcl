@@ -79,6 +79,8 @@ setup(name='python-pcl',
                              language="c++", **ext_args),
                    Extension("pcl.registration", ["pcl/registration.pyx", "pcl/registration_helper.cpp"],
                              language="c++", **ext_args),
+                   Extension("pcl.boundaries", ["pcl/boundaries.pyx"],
+                             language="c++", **ext_args),
                   ],
       cmdclass={'build_ext': build_ext}
       )

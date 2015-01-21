@@ -2,6 +2,7 @@
 
 pcl/_pcl.cpp
 pcl/_pcl.html
+pcl/boundaries.cpp
 pcl/registration.cpp
 
 *.py[co]
