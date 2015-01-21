@@ -16,7 +16,6 @@ from cpython cimport Py_buffer
 
 from libcpp.string cimport string
 from libcpp cimport bool
-from libcpp.cast cimport reinterpret_cast
 from libcpp.vector cimport vector
 
 from shared_ptr cimport sp_assign
@@ -60,18 +59,25 @@ SACMODEL_STICK = cpp.SACMODEL_STICK
 cnp.import_array()
 
 # RGB helper functions
-cdef float rgb_to_float(cnp.float32_t r_, cnp.float32_t g_,
-                        cnp.float32_t b_) nogil:
+cdef float rgb_to_float(float r_, float g_, float b_):
     cdef int r = <int>r_, g = <int>g_, b = <int>b_
-    return <float>(r << 16 | g << 8 | b)
+    rgb = r << 16 | g << 8 | b
+    # p.rgb = *reinterpret_cast<float*>(&rgb);
+    rgb_bytes = struct.pack('I', rgb)
+    p_rgb = struct.unpack('f', rgb_bytes)[0]
+    return p_rgb
 
-ctypedef cpp.uint32_t *u32ptr   # work around Cython limitation
-cdef void float_to_rgb(float *p_rgb, float *pr, float *pg, float *pb):
-    cdef cpp.uint32_t rgb = reinterpret_cast[u32ptr](p_rgb)[0]
 
-    pr[0] = (rgb >> 16) & 0x0000ff
-    pg[0] = (rgb >> 8)  & 0x0000ff
-    pb[0] = (rgb)       & 0x0000ff
+def float_to_rgb(p_rgb):
+    # rgb = *reinterpret_cast<int*>(&p.rgb)
+    rgb_bytes = struct.pack('f', p_rgb)
+    rgb = struct.unpack('I', rgb_bytes)[0]
+ 
+    r = (rgb >> 16) & 0x0000ff
+    g = (rgb >> 8)  & 0x0000ff
+    b = (rgb)       & 0x0000ff
+    return r,g,b
+
 
 
 cdef class Segmentation:
@@ -279,8 +285,10 @@ cdef class BasePointCloud:
             if rgb:
                 # XXX do we want to convert RGB to floats?
                 # The actual values fit in single bytes.
-                float_to_rgb(&p.rgb,
-                             &result[i, 3], &result[i, 4], &result[i, 5])
+                r, g, b = float_to_rgb(p.rgb)
+                result[i, 3] = r
+                result[i, 4] = g
+                result[i, 5] = b
 
         return result
 
@@ -328,15 +336,11 @@ cdef class BasePointCloud:
         Return a point (6-tuple) at the given row/column
         """
         cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr(), row, col)
-        cdef cnp.float32_t r, g, b
-        float_to_rgb(&p.rgb, &r, &g, &b)
-        return p.x, p.y, p.z, r, g, b
+        return (p.x, p.y, p.z) + float_to_rgb(p.rgb)
 
     def __getitem__(self, cnp.npy_intp idx):
         cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr(), idx)
-        cdef cnp.float32_t r, g, b
-        float_to_rgb(&p.rgb, &r, &g, &b)
-        return p.x, p.y, p.z, r, g, b
+        return (p.x, p.y, p.z) + float_to_rgb(p.rgb)
 
     def from_file(self, char *f):
         """
