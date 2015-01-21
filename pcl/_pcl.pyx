@@ -60,7 +60,7 @@ cnp.import_array()
 
 # RGB helper functions
 cdef float rgb_to_float(float r_, float g_, float b_):
-    cdef int r = <int>r_, g = <int>g_, b = <int>b_
+    cdef int r = <unsigned char>r_, g = <unsigned char>g_, b = <unsigned char>b_
     rgb = r << 16 | g << 8 | b
     # p.rgb = *reinterpret_cast<float*>(&rgb);
     rgb_bytes = struct.pack('I', rgb)
