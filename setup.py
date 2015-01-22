@@ -66,7 +66,6 @@ for flag in pkgconfig('--libs-only-L'):
 for flag in pkgconfig('--libs-only-other'):
     ext_args['extra_link_args'].append(flag)
 
-
 setup(name='python-pcl',
       description='pcl wrapper',
       url='http://github.com/strawlab/python-pcl',
@@ -79,7 +78,7 @@ setup(name='python-pcl',
                              language="c++", **ext_args),
                    Extension("pcl.registration", ["pcl/registration.pyx", "pcl/registration_helper.cpp"],
                              language="c++", **ext_args),
-                   Extension("pcl.boundaries", ["pcl/boundaries.pyx"],
+                   Extension("pcl.boundaries", ["pcl/boundaries.pyx"], extra_objects=["pcl/_pcl.so"], 
                              language="c++", **ext_args),
                   ],
       cmdclass={'build_ext': build_ext}
