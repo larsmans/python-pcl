@@ -66,6 +66,9 @@ for flag in pkgconfig('--libs-only-L'):
 for flag in pkgconfig('--libs-only-other'):
     ext_args['extra_link_args'].append(flag)
 
+# Hidden dependency of boundary detection.
+ext_args['libraries'].append(u'boost_system')
+
 setup(name='python-pcl',
       description='pcl wrapper',
       url='http://github.com/strawlab/python-pcl',

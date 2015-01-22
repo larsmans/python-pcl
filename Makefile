@@ -14,7 +14,8 @@ test: pcl/_pcl.so tests/test.py pcl/registration.so
 
 clean:
 	rm -rf build
-	rm -f pcl/_pcl.cpp pcl/_pcl.so pcl/registration.so pcl/registration.cpp
+	rm -f pcl/*.so
+	rm -f pcl/_pcl.cpp pcl/boundaries.cpp pcl/registration.cpp
 
 doc: pcl.so conf.py readme.rst
 	sphinx-build -b singlehtml -d build/doctrees . build/html
