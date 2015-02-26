@@ -23,7 +23,7 @@ cdef extern from "minipcl.h":
 
 def estimate_boundaries(_pcl.BasePointCloud pc,
                         float angle_threshold,
-                        double search_radius=-1,
+                        double search_radius,
                         int normal_ksearch=-1,
                         double normal_search_radius=-1):
     """Boundary estimation.
@@ -31,6 +31,9 @@ def estimate_boundaries(_pcl.BasePointCloud pc,
     Returns an array of booleans (true = boundary point); one per point in
     the point cloud pc.
     """
+    if normal_ksearch == -1 and normal_search_radius == -1:
+        raise ValueError("Either K nearest neighbors (normal_ksearch) or a search radius (normal_search_radius) must be set.")
+    
     cdef np.ndarray[np.uint8_t, ndim=1, mode='c'] out
     out = np.empty(len(pc), dtype=np.uint8)
     mpcl_estimate_boundaries(deref(pc.thisptr()), angle_threshold,
