@@ -43,11 +43,12 @@ class BasePyPointCloud(BasePointCloud):
 
 
 class PointCloud(BasePyPointCloud):
+    """3-d point cloud (no color information)."""
+
     def __getitem__(self, idx):
         x, y, z, _, _, _ = super(BasePyPointCloud, self).__getitem__(idx)
         return x, y, z
 
-    """3-d point cloud (no color information)."""
     def get_point(self, row, col):
         """Return point (3-tuple) at the given row/column."""
         return self._get_point(row, col)[:3]

@@ -17,7 +17,9 @@ clean:
 	rm -f pcl/*.so
 	rm -f pcl/_pcl.cpp pcl/boundaries.cpp pcl/registration.cpp
 
-doc: pcl.so conf.py readme.rst
+doc: build/html/readme.html
+
+build/html/readme.html: pcl/_pcl.so conf.py readme.rst
 	sphinx-build -b singlehtml -d build/doctrees . build/html
 
 showdoc: doc
