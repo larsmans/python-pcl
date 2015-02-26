@@ -58,7 +58,7 @@ class PointCloud(BasePyPointCloud):
         return self._to_array(np.empty((self.size, 3), dtype=np.float32))
 
 
-class PointCloudXYZRGB(BasePyPointCloud):
+class PointCloudXYZRGBNormal(BasePyPointCloud):
     """3-d point cloud (no color information)."""
     def get_point(self, row, col):
         """Return point (3-tuple) at the given row/column."""
@@ -83,7 +83,7 @@ def load(path, format=None, loadRGB=False):
     """
     format = _infer_format(path, format)
     if loadRGB:
-        p = PointCloudXYZRGB()
+        p = PointCloudXYZRGBNormal()
     else:
         p = PointCloud()
     try:

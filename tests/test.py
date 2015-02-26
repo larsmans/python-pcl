@@ -32,9 +32,9 @@ class TestListIO(unittest.TestCase):
         l = self.p.to_list()
         assert np.allclose(l, _data)
 
-class TestListIOXYZRGB(unittest.TestCase):
+class TestListIOXYZRGBNormal(unittest.TestCase):
     def setUp(self):
-        self.p = pcl.PointCloudXYZRGB(_datargb)
+        self.p = pcl.PointCloudXYZRGBNormal(_datargb)
 
     def testFromList(self):
         for i,d in enumerate(_datargb):
@@ -195,11 +195,11 @@ SEGDATARGB = \
 0.905417 -0.579787 1 0 0 0;
 0.898706 -0.504929 1 0 0 0"""
 
-class TestSegmentPlaneXYZRGB(unittest.TestCase):
+class TestSegmentPlaneXYZRGBNormal(unittest.TestCase):
 
     def setUp(self):
         self.a = np.array(np.mat(SEGDATARGB, dtype=np.float32))
-        self.p = pcl.PointCloudXYZRGB()
+        self.p = pcl.PointCloudXYZRGBNormal()
         self.p.from_array(self.a)
 
     def testLoad(self):
@@ -429,7 +429,7 @@ class TestKdTree(unittest.TestCase):
             for d in sqdist:
                 self.assertGreaterEqual(d, 0)
 
-class TestKdTreeXYZRGB(unittest.TestCase):
+class TestKdTreeXYZRGBNormal(unittest.TestCase):
     def setUp(self):
         rng = np.random.RandomState(42)
         # Define two dense sets of points of sizes 30 and 170, resp.
@@ -438,7 +438,7 @@ class TestKdTreeXYZRGB(unittest.TestCase):
         argb = np.random.randint(0,255,(100,3))
         a = np.hstack([axyz, argb]).astype(np.float32)
 
-        self.pc = pcl.PointCloudXYZRGB(a)
+        self.pc = pcl.PointCloudXYZRGBNormal(a)
         self.kd = pcl.KdTreeFLANN(self.pc)
 
     def testException(self):

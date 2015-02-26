@@ -6,7 +6,7 @@
 
 using pcl::FPFHSignature33;
 using pcl::PointCloud;
-using pcl::PointXYZRGB;
+using pcl::PointXYZRGBNormal;
 
 #if 0
 static void mpcl_print_fpfhfloat(const PointCloud<FPFHSignature33> &feature_source,
@@ -27,21 +27,21 @@ static void mpcl_print_fpfhfloat(const PointCloud<FPFHSignature33> &feature_sour
 }
 #endif
     
-void mpcl_compute_fpfh(PointCloud<PointXYZRGB> &cloud_source_ptr,
-                       PointCloud<PointXYZRGB> &cloud_target_ptr,
+void mpcl_compute_fpfh(PointCloud<PointXYZRGBNormal> &cloud_source_ptr,
+                       PointCloud<PointXYZRGBNormal> &cloud_target_ptr,
                        double searchRadius,
                        PointCloud<FPFHSignature33> &feature_source_out,
                        PointCloud<FPFHSignature33> &feature_target_out)
 {
     // Initialize estimators for surface normals and FPFH features
-    pcl::search::KdTree<PointXYZRGB>::Ptr tree (new pcl::search::KdTree<PointXYZRGB> ());
+    pcl::search::KdTree<PointXYZRGBNormal>::Ptr tree (new pcl::search::KdTree<PointXYZRGBNormal> ());
 
-    pcl::NormalEstimation<PointXYZRGB, pcl::Normal> norm_est;
+    pcl::NormalEstimation<PointXYZRGBNormal, pcl::Normal> norm_est;
     norm_est.setSearchMethod (tree);
     norm_est.setRadiusSearch (searchRadius); // 0.05
     PointCloud<pcl::Normal> normals;
 
-    pcl::FPFHEstimation<PointXYZRGB, pcl::Normal, FPFHSignature33> fpfh_est;
+    pcl::FPFHEstimation<PointXYZRGBNormal, pcl::Normal, FPFHSignature33> fpfh_est;
     fpfh_est.setSearchMethod (tree);
     fpfh_est.setRadiusSearch (searchRadius); // 0.05
 
@@ -61,11 +61,11 @@ void mpcl_compute_fpfh(PointCloud<PointXYZRGB> &cloud_source_ptr,
     fpfh_est.compute (feature_target_out);
 }
 
-void mpcl_sac_ia_init(PointCloud<PointXYZRGB> &cloud_source_ptr,
-                      PointCloud<PointXYZRGB> &cloud_target_ptr,
+void mpcl_sac_ia_init(PointCloud<PointXYZRGBNormal> &cloud_source_ptr,
+                      PointCloud<PointXYZRGBNormal> &cloud_target_ptr,
                       double searchRadius, double minSampleDistance,
                       double maxCorrespondenceDistance,
-                      pcl::SampleConsensusInitialAlignment<PointXYZRGB, PointXYZRGB,
+                      pcl::SampleConsensusInitialAlignment<PointXYZRGBNormal, PointXYZRGBNormal,
                                                            FPFHSignature33> &reg)
 {
     PointCloud<FPFHSignature33> features_source, features_target;

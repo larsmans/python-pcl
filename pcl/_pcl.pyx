@@ -157,7 +157,7 @@ cdef Py_ssize_t _strides[2]
 cdef BasePointCloud _pc_tmp = BasePointCloud(np.array([[1, 2, 3],
                                                        [4, 5, 6]],
                                                       dtype=np.float32))
-cdef cpp.PointCloud[cpp.PointXYZRGB] *p = _pc_tmp.thisptr()
+cdef cpp.PointCloud[cpp.PointXYZRGBNormal] *p = _pc_tmp.thisptr()
 _strides[0] = (  <Py_ssize_t><void *>cpp.getptr(p, 1)
                - <Py_ssize_t><void *>cpp.getptr(p, 0))
 _strides[1] = (  <Py_ssize_t><void *>&(cpp.getptr(p, 0).y)
@@ -174,7 +174,7 @@ cdef class BasePointCloud:
 
         self._view_count = 0
 
-        sp_assign(self.thisptr_shared, new cpp.PointCloud[cpp.PointXYZRGB]())
+        sp_assign(self.thisptr_shared, new cpp.PointCloud[cpp.PointXYZRGBNormal]())
 
         if init is None:
             return
@@ -260,7 +260,7 @@ cdef class BasePointCloud:
         self.thisptr().width = npts
         self.thisptr().height = 1
 
-        cdef cpp.PointXYZRGB *p
+        cdef cpp.PointXYZRGBNormal *p
         for i in range(npts):
             p = cpp.getptr(self.thisptr(), i)
             p.x, p.y, p.z = arr[i, 0], arr[i, 1], arr[i, 2]
@@ -275,7 +275,7 @@ cdef class BasePointCloud:
         cdef bint rgb = result.shape[1] > 3
         cdef float x,y,z
         cdef cnp.npy_intp n = self.thisptr().size()
-        cdef cpp.PointXYZRGB *p
+        cdef cpp.PointXYZRGBNormal *p
 
         for i in range(n):
             p = cpp.getptr(self.thisptr(), i)
@@ -297,7 +297,7 @@ cdef class BasePointCloud:
         Fill this pointcloud from a list of 3-tuples
         """
         cdef Py_ssize_t npts = len(_list)
-        cdef cpp.PointXYZRGB *p
+        cdef cpp.PointXYZRGBNormal *p
 
         self.resize(npts)
         self.thisptr().width = npts
@@ -335,11 +335,11 @@ cdef class BasePointCloud:
         """
         Return a point (6-tuple) at the given row/column
         """
-        cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr(), row, col)
+        cdef cpp.PointXYZRGBNormal *p = cpp.getptr_at(self.thisptr(), row, col)
         return (p.x, p.y, p.z) + float_to_rgb(p.rgb)
 
     def __getitem__(self, cnp.npy_intp idx):
-        cdef cpp.PointXYZRGB *p = cpp.getptr_at(self.thisptr(), idx)
+        cdef cpp.PointXYZRGBNormal *p = cpp.getptr_at(self.thisptr(), idx)
         return (p.x, p.y, p.z) + float_to_rgb(p.rgb)
 
     def from_file(self, char *f):
@@ -712,8 +712,8 @@ cdef class KdTreeFLANN:
             sqdist[i] = k_sqr_distances[i]
             ind[i] = k_indices[i]
 
-cdef cpp.PointXYZRGB to_point_t(point):
-    cdef cpp.PointXYZRGB p
+cdef cpp.PointXYZRGBNormal to_point_t(point):
+    cdef cpp.PointXYZRGBNormal p
     p.x = point[0]
     p.y = point[1]
     p.z = point[2]

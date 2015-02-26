@@ -38,8 +38,8 @@ cdef extern from "pcl/registration/icp.h" namespace "pcl" nogil:
     cdef cppclass IterativeClosestPoint[Source, Target](Registration[Source, Target]):
         IterativeClosestPoint() except +
 
-ctypedef IterativeClosestPoint[cpp.PointXYZRGB,cpp.PointXYZRGB] IterativeClosestPoint_t
-ctypedef shared_ptr[IterativeClosestPoint[cpp.PointXYZRGB,cpp.PointXYZRGB]] IterativeClosestPointPtr_t
+ctypedef IterativeClosestPoint[cpp.PointXYZRGBNormal,cpp.PointXYZRGBNormal] IterativeClosestPoint_t
+ctypedef shared_ptr[IterativeClosestPoint[cpp.PointXYZRGBNormal,cpp.PointXYZRGBNormal]] IterativeClosestPointPtr_t
 
 cdef extern from "pcl/registration/gicp.h" namespace "pcl" nogil:
     cdef cppclass GeneralizedIterativeClosestPoint[Source, Target](Registration[Source, Target]):
@@ -53,8 +53,8 @@ cdef extern from "pcl/registration/ia_ransac.h" namespace "pcl" nogil:
     cdef cppclass SampleConsensusInitialAlignment[Source, Target, Feature](Registration[Source, Target]):
         SampleConsensusInitialAlignment() except +
 
-ctypedef SampleConsensusInitialAlignment[cpp.PointXYZRGB,cpp.PointXYZRGB,FPFHSignature33] SampleConsensusInitialAlignment_t
-ctypedef shared_ptr[SampleConsensusInitialAlignment[cpp.PointXYZRGB,cpp.PointXYZRGB,FPFHSignature33]] SampleConsensusInitialAlignmentPtr_t
+ctypedef SampleConsensusInitialAlignment[cpp.PointXYZRGBNormal,cpp.PointXYZRGBNormal,FPFHSignature33] SampleConsensusInitialAlignment_t
+ctypedef shared_ptr[SampleConsensusInitialAlignment[cpp.PointXYZRGBNormal,cpp.PointXYZRGBNormal,FPFHSignature33]] SampleConsensusInitialAlignmentPtr_t
 
 cdef extern from "registration_helper.h":
     void mpcl_sac_ia_init(cpp.PointCloud_t, cpp.PointCloud_t,
@@ -62,7 +62,7 @@ cdef extern from "registration_helper.h":
                           double maxCorrespondenceDistance,
                           SampleConsensusInitialAlignment_t) except +    
 
-cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
+cdef object run(Registration[cpp.PointXYZRGBNormal, cpp.PointXYZRGBNormal] &reg,
                 _pcl.BasePointCloud source, _pcl.BasePointCloud target,
                 max_iter=None, transformationEpsilon=None, euclideanFitnessEpsilon=None):
     reg.setInputSource(source.thisptr_shared)
@@ -83,7 +83,7 @@ cdef object run(Registration[cpp.PointXYZRGB, cpp.PointXYZRGB] &reg,
         reg.align(result.thisptr()[0])
 
     # Get transformation matrix and convert from Eigen to NumPy format.
-    cdef Registration[cpp.PointXYZRGB, cpp.PointXYZRGB].Matrix4 mat
+    cdef Registration[cpp.PointXYZRGBNormal, cpp.PointXYZRGBNormal].Matrix4 mat
     mat = reg.getFinalTransformation()
     cdef np.ndarray[dtype=np.float32_t, ndim=2, mode='fortran'] transf
     cdef np.float32_t *transf_data
@@ -126,7 +126,7 @@ def icp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None,
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef IterativeClosestPoint[cpp.PointXYZRGB, cpp.PointXYZRGB] icp    
+    cdef IterativeClosestPoint[cpp.PointXYZRGBNormal, cpp.PointXYZRGBNormal] icp    
         
     #mpcl_icp_init(deref(source.thisptr()), deref(target.thisptr()), transformationEpsilon, 
     #              euclideanFitnessEpsilon, icp)    
@@ -158,7 +158,7 @@ def gicp(_pcl.BasePointCloud source, _pcl.BasePointCloud target, max_iter=None):
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef GeneralizedIterativeClosestPoint[cpp.PointXYZRGB, cpp.PointXYZRGB] gicp
+    cdef GeneralizedIterativeClosestPoint[cpp.PointXYZRGBNormal, cpp.PointXYZRGBNormal] gicp
     return run(gicp, source, target, max_iter)
 
 
@@ -187,8 +187,8 @@ def icp_nl(_pcl.BasePointCloud source, _pcl.BasePointCloud target,
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef IterativeClosestPointNonLinear[cpp.PointXYZRGB,
-                                        cpp.PointXYZRGB] icp_nl
+    cdef IterativeClosestPointNonLinear[cpp.PointXYZRGBNormal,
+                                        cpp.PointXYZRGBNormal] icp_nl
     return run(icp_nl, source, target, max_iter)
 	
 def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target,
@@ -224,7 +224,7 @@ def ia_ransac(_pcl.BasePointCloud source, _pcl.BasePointCloud target,
     fitness : float
         Sum of squares error in the estimated transformation.
     """
-    cdef SampleConsensusInitialAlignment[cpp.PointXYZRGB, cpp.PointXYZRGB,
+    cdef SampleConsensusInitialAlignment[cpp.PointXYZRGBNormal, cpp.PointXYZRGBNormal,
                                          FPFHSignature33] ia_ransac
     mpcl_sac_ia_init(deref(source.thisptr()), deref(target.thisptr()), radius,
                      minSampleDistance, maxCorrespondenceDistance, ia_ransac)

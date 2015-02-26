@@ -4,11 +4,11 @@
 #include <pcl/point_types.h>
 #include <pcl/registration/ia_ransac.h>
 
-void mpcl_sac_ia_init(pcl::PointCloud<pcl::PointXYZRGB> &,
-                      pcl::PointCloud<pcl::PointXYZRGB> &,
+void mpcl_sac_ia_init(pcl::PointCloud<pcl::PointXYZRGBNormal> &,
+                      pcl::PointCloud<pcl::PointXYZRGBNormal> &,
                       double, double, double,
-                      pcl::SampleConsensusInitialAlignment<pcl::PointXYZRGB,
-                                                           pcl::PointXYZRGB,
+                      pcl::SampleConsensusInitialAlignment<pcl::PointXYZRGBNormal,
+                                                           pcl::PointXYZRGBNormal,
                                                            pcl::FPFHSignature33>&);
 
 #endif

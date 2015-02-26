@@ -66,6 +66,10 @@ for flag in pkgconfig('--libs-only-L'):
 for flag in pkgconfig('--libs-only-other'):
     ext_args['extra_link_args'].append(flag)
 
+# Need this to make PointXYZRGBNormal work; otherwise, we get a linker error
+# for MovingLeastSquares.
+ext_args['extra_compile_args'].append('-DPCL_NO_PRECOMPILE')
+
 # Hidden dependency of boundary detection.
 ext_args['libraries'].append(u'boost_system')
 

@@ -9,13 +9,13 @@
 #include "minipcl.h"
 
 // set ksearch and radius to < 0 to disable 
-void mpcl_compute_normals(pcl::PointCloud<pcl::PointXYZRGB> &cloud,
+void mpcl_compute_normals(pcl::PointCloud<pcl::PointXYZRGBNormal> &cloud,
                           int ksearch,
                           double searchRadius,
                           pcl::PointCloud<pcl::Normal> &out)
 {
-    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
-    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+    pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBNormal> ());
+    pcl::NormalEstimation<pcl::PointXYZRGBNormal, pcl::Normal> ne;
 
     ne.setSearchMethod (tree);
     ne.setInputCloud (cloud.makeShared());
@@ -27,7 +27,7 @@ void mpcl_compute_normals(pcl::PointCloud<pcl::PointXYZRGB> &cloud,
 }
 
 // Boundary estimation (uses normal estimation, hence the parameters).
-void mpcl_estimate_boundaries(pcl::PointCloud<pcl::PointXYZRGB> &cloud,
+void mpcl_estimate_boundaries(pcl::PointCloud<pcl::PointXYZRGBNormal> &cloud,
                               float angle_threshold,
                               double search_radius,
                               int normal_ksearch,
@@ -37,7 +37,7 @@ void mpcl_estimate_boundaries(pcl::PointCloud<pcl::PointXYZRGB> &cloud,
     pcl::PointCloud<pcl::Normal> normals;
     mpcl_compute_normals(cloud, normal_ksearch, normal_search_radius, normals);
     pcl::PointCloud<pcl::Boundary> boundaries;
-    pcl::BoundaryEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::Boundary> est;
+    pcl::BoundaryEstimation<pcl::PointXYZRGBNormal, pcl::Normal, pcl::Boundary> est;
     est.setInputCloud(cloud.makeShared());
     est.setInputNormals(normals.makeShared());
 
@@ -45,8 +45,8 @@ void mpcl_estimate_boundaries(pcl::PointCloud<pcl::PointXYZRGB> &cloud,
         est.setRadiusSearch(search_radius);
     }
 
-    est.setSearchMethod(typename pcl::search::KdTree<pcl::PointXYZRGB>::Ptr(
-                            new pcl::search::KdTree<pcl::PointXYZRGB>));
+    est.setSearchMethod(typename pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr(
+                            new pcl::search::KdTree<pcl::PointXYZRGBNormal>));
     est.compute(boundaries);
 
     for (size_t i = 0; i < n; i++) {
@@ -54,20 +54,20 @@ void mpcl_estimate_boundaries(pcl::PointCloud<pcl::PointXYZRGB> &cloud,
     }
 }
 
-void mpcl_sacnormal_set_axis(pcl::SACSegmentationFromNormals<pcl::PointXYZRGB, pcl::Normal> &sac,
+void mpcl_sacnormal_set_axis(pcl::SACSegmentationFromNormals<pcl::PointXYZRGBNormal, pcl::Normal> &sac,
                              double ax, double ay, double az)
 {
     Eigen::Vector3f vect(ax,ay,az);
     sac.setAxis(vect);
 }
 
-void mpcl_extract(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &incloud,
-                  pcl::PointCloud<pcl::PointXYZRGB> *outcloud,
+void mpcl_extract(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr &incloud,
+                  pcl::PointCloud<pcl::PointXYZRGBNormal> *outcloud,
                   pcl::PointIndices *indices,
                   bool negative)
 {
     pcl::PointIndices::Ptr indicesptr (indices);
-    pcl::ExtractIndices<pcl::PointXYZRGB> ext;
+    pcl::ExtractIndices<pcl::PointXYZRGBNormal> ext;
     ext.setInputCloud(incloud);
     ext.setIndices(indicesptr);
     ext.setNegative(negative);
