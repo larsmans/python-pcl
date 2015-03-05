@@ -18,7 +18,7 @@ test: pcl/_pcl.so tests/test.py pcl/registration.so pcl/boundaries.so
 clean:
 	rm -rf build
 	rm -f pcl/*.so
-	rm -f pcl/_pcl.cpp pcl/registration.cpp
+	rm -f pcl/_pcl.cpp pcl/boundaries.cpp pcl/registration.cpp
 
 doc: build/html/readme.html
 
