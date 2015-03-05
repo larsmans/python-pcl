@@ -11,9 +11,13 @@ import os
 
 # JB: faster compilation? remove for production
 os.environ['CFLAGS'] = '-O0'
+boudaries_extra_objects = ['pcl/_pcl.so']
 
 if platform.system() == "Darwin":
-	os.environ['ARCHFLAGS'] = ''
+    # Use default OS X ARCHFLAGS, otherwise Python adds unknown architectures.
+    os.environ['ARCHFLAGS'] = '' 
+    # Do not cross-compile extra objects, the OS X linker does not understand shared objects (SO)
+    boundaries_extra_objects = []
 
 # Try to find PCL. XXX we should only do this when trying to build or install.
 PCL_SUPPORTED = ["-1.7", ""]    # in order of preference
@@ -81,7 +85,7 @@ setup(name='python-pcl',
                              language="c++", **ext_args),
                    Extension("pcl.registration", ["pcl/registration.pyx", "pcl/registration_helper.cpp"],
                              language="c++", **ext_args),
-                   Extension("pcl.boundaries", ["pcl/boundaries.pyx"],
+                   Extension("pcl.boundaries", ["pcl/boundaries.pyx"], extra_objects=boundaries_extra_objects,
                              language="c++", **ext_args),
                   ],
       cmdclass={'build_ext': build_ext}
