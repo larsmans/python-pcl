@@ -11,7 +11,7 @@ import os
 
 # JB: faster compilation? remove for production
 os.environ['CFLAGS'] = '-O0'
-boudaries_extra_objects = ['pcl/_pcl.so']
+boundaries_extra_objects = ['pcl/_pcl.so']
 
 if platform.system() == "Darwin":
     # Use default OS X ARCHFLAGS, otherwise Python adds unknown architectures.
