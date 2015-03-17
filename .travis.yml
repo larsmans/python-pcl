@@ -12,6 +12,7 @@ before_install:
   - "sudo apt-get -q -y install libpcl-all"
   - "sudo apt-get -q -y install libeigen3-dev"
   - "pip install python-coveralls"
+  - "cat /usr/include/eigen3/Eigen/Sparse"
   
 install:
   - "make all"
