@@ -10,6 +10,7 @@ before_install:
   - "export DEBIAN_FRONTEND=noninteractive"
   #- "sudo apt-get -q -y upgrade"
   - "sudo apt-get -q -y install libpcl-all"
+  - "sudo apt-get -q -y install libeigen3-dev"
   - "pip install python-coveralls"
   
 install:
