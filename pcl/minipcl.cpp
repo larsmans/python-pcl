@@ -4,7 +4,7 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/filters/extract_indices.h>
 
-#define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET 1
+#define EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET
 
 #include <Eigen/Dense>
 
