@@ -14,6 +14,9 @@
       })();
     </script>
 
+.. image:: https://travis-ci.org/larsmans/python-pcl.svg
+    :target: https://travis-ci.org/larsmans/python-pcl
+
 Introduction
 ============
 
