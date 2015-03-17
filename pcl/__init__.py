@@ -71,7 +71,7 @@ class PointCloudXYZRGB(BasePyPointCloud):
         return self._to_array(np.empty((self.size, 6), dtype=np.float32))
 
 
-def load(path, format=None, loadRGB=False):
+def load(path, format=None, loadRGB=True):
     """Load pointcloud from path.
 
     Currently supports PCD and PLY files.

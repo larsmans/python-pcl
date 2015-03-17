@@ -536,7 +536,7 @@ class TestOctreePointCloudSearch(unittest.TestCase):
 class TestColour(unittest.TestCase):
 
     def setUp(self):
-        self.pc = pcl.load("tests/color.ply", loadRGB=True)
+        self.pc = pcl.load("tests/color.ply")
 
     def testColour(self):
         self.assertEqual(self.pc.to_array().shape[1], 6)
