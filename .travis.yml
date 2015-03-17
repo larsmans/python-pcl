@@ -7,8 +7,9 @@ before_install:
   - "pip install cython -q"
   - "sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl -y"
   - "sudo apt-get update"
+  - "export DEBIAN_FRONTEND=noninteractive"
   - "sudo apt-get -q -y upgrade"
-  - "sudo apt-get install libpcl-all"
+  - "sudo apt-get -q -y install libpcl-all"
   
 install:
   - "make all"
