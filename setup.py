@@ -73,6 +73,9 @@ for flag in pkgconfig('--libs-only-other'):
 # Hidden dependency of boundary detection.
 ext_args['libraries'].append(u'boost_system')
 
+# Fix compile error on ubuntu 12.04 (eg. Travis-ci)
+ext_args['define_macros'].append(("EIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET", "1"))
+
 setup(name='python-pcl',
       description='pcl wrapper',
       url='http://github.com/strawlab/python-pcl',
