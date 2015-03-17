@@ -6,7 +6,7 @@ install:
   - "pip install cython -q"
   - "sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl -y"
   - "sudo apt-get update"
-  - "sudo apt-get upgrade --assume-yes"
+  - "sudo apt-get upgrade -y"
   - "sudo apt-get install libpcl-all"
   - "make all"
   - "pwd"
