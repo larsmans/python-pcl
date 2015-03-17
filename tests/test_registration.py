@@ -72,9 +72,6 @@ class TestICP(unittest.TestCase):
         # print("Translation: ", transf[3, 0:3])
         # print("---------")
 
-    def testICP(self):
-        self.check_algo(icp)
-
     def testGICP(self):
         self.check_algo(gicp)
 
@@ -88,6 +85,8 @@ class TestICP(unittest.TestCase):
                         maxCorrespondenceDistance=0.5, max_iter=10000)
 
     def testICP(self):
+        self.check_algo(icp)
+
         transf1 = icp(self.source, self.target, max_iter=1)[1]
         transf2 = icp(self.source, self.target, max_iter=2)[1]
         self.assertFalse(np.allclose(transf1, transf2, 0, 0.1),

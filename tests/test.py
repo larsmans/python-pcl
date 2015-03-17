@@ -458,9 +458,9 @@ class TestKdTreeXYZRGB(unittest.TestCase):
     def setUp(self):
         rng = np.random.RandomState(42)
         # Define two dense sets of points of sizes 30 and 170, resp.
-        axyz = np.random.randn(100, 3).astype(np.float32)
+        axyz = rng.randn(100, 3).astype(np.float32)
         axyz[:30] -= 42
-        argb = np.random.randint(0, 255, (100, 3))
+        argb = rng.randint(0, 255, (100, 3))
         a = np.hstack([axyz, argb]).astype(np.float32)
 
         self.pc = pcl.PointCloudXYZRGB(a)
