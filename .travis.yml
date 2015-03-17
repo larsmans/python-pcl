@@ -2,14 +2,15 @@ language: python
 python:  
   - "2.7"  
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install:
+
+before_install:
   - "pip install cython -q"
   - "sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl -y"
   - "sudo apt-get update"
-  - "sudo export DEBIAN_FRONTEND=noninteractive"
-  - "sudo echo $DEBIAN_FRONTEND"
   - "sudo apt-get upgrade -y -qq"
   - "sudo apt-get install libpcl-all"
+  
+install:
   - "make all"
   - "pwd"
   - "ls"
