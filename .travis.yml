@@ -4,13 +4,13 @@ python:
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 
 before_install:
-  - "sudo apt-get update"
-  - "pip install cython -q"
   - "sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl -y"
   - "sudo apt-get update"
+  - "pip install cython -q"
   - "export DEBIAN_FRONTEND=noninteractive"
   #- "sudo apt-get -q -y upgrade"
   - "sudo apt-get -q -y install libpcl-all"
+  - "pip install python-coveralls"
   
 install:
   - "make all"
@@ -20,3 +20,6 @@ install:
   - "env"
 # command to run tests, e.g. python setup.py test
 script:  make test
+
+after_success:
+  - coveralls
