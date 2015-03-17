@@ -1,0 +1,16 @@
+language: python
+python:  
+  - "2.7"  
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - "pip install cython -q"
+  - "sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl -y"
+  - "sudo apt-get update"
+  - "sudo apt-get install libpcl-all"
+  - "make all"
+  - "pwd"
+  - "ls"
+  - "ldd pcl/registration.so"
+  - "env"
+# command to run tests, e.g. python setup.py test
+script:  make test
